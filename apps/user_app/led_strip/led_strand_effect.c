@@ -60,7 +60,8 @@ void fc_data_init(void)
     fc_effect.rgb.g = 0;
     fc_effect.rgb.b = 0;
     fc_effect.dream_scene.speed = 100;
-    fc_effect.sequence = NEO_BGR;
+    // fc_effect.sequence = NEO_BGR;
+    fc_effect.sequence = NEO_RBGW;
     fc_effect.b = 255;
     fc_effect.speed = 80;
     fc_effect.music.m = 1;

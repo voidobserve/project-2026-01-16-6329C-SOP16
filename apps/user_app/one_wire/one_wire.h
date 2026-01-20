@@ -1,8 +1,10 @@
-#ifndef _ONE_WIRE_H
-#define _ONE_WIRE_H
+#ifndef __ONE_WIRE_H__
+#define __ONE_WIRE_H__
 
 #include "system/includes.h"
 
+// 驱动电机ic的控制脚：
+#define MOTOR_CTL_PIN IO_PORTB_05
 
 typedef struct
 {

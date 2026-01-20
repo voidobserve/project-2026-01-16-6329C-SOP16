@@ -84,7 +84,7 @@ static u8 rf24g_get_key_value(void)
         if(last_dynamic_code != rf24g_ins.dynamic_code)// || last_key_v != rf24g_ins.key_v)
         {
             long_press_cnt = 0;
-            printf("\n dynamic_code=%d", rf24g_ins.dynamic_code);
+            // printf("\n dynamic_code=%d", rf24g_ins.dynamic_code);
             last_key_v = rf24g_ins.key_v;
             last_dynamic_code = rf24g_ins.dynamic_code;
             return rf24g_ins.key_v;
@@ -96,7 +96,7 @@ static u8 rf24g_get_key_value(void)
                  rf24_T1++;
                 long_press_cnt = 0;
                 rf24g_key_state = KEY_EVENT_LONG;
-                printf("\n KEY_EVENT_LONG");
+                // printf("\n KEY_EVENT_LONG");
                 last_key_v = rf24g_ins.key_v;
                 return rf24g_ins.key_v;
             }

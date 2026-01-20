@@ -47,9 +47,9 @@
 //搜索类型
 #define SET_SCAN_TYPE       SCAN_ACTIVE
 //搜索 周期大小
-#define SET_SCAN_INTERVAL   ADV_SCAN_MS(24) // unit: 0.625ms
+#define SET_SCAN_INTERVAL   ADV_SCAN_MS(16) // unit: 0.625ms
 //搜索 窗口大小
-#define SET_SCAN_WINDOW     ADV_SCAN_MS(8)  // unit: 0.625ms, <= SET_SCAN_INTERVAL
+#define SET_SCAN_WINDOW     ADV_SCAN_MS(16)  // unit: 0.625ms, <= SET_SCAN_INTERVAL
 
 //连接周期
 #define BASE_INTERVAL_MIN   (6)//最小的interval

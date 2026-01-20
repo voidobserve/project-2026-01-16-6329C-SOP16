@@ -24,7 +24,7 @@
 #define TCFG_UART0_ENABLE					ENABLE_THIS_MOUDLE                     //串口打印模块使能
 #define TCFG_UART0_RX_PORT					NO_CONFIG_PORT                         //串口接收脚配置（用于打印可以选择NO_CONFIG_PORT）
 #define TCFG_UART0_TX_PORT  				IO_PORT_DP                            //串口发送脚配置
-#define TCFG_UART0_BAUDRATE  				1000000                                //串口波特率配置
+#define TCFG_UART0_BAUDRATE  				1500000                                //串口波特率配置
 
 #define UART_DB_TX_PIN                      IO_PORTA_01                            //AT_CHART串口
 #define UART_DB_RX_PIN                      IO_PORTA_02
@@ -338,7 +338,8 @@
 //                                 时钟配置                                    //
 //*********************************************************************************//
 
-#define CONFIG_BT_NORMAL_HZ	            (48 * 1000000L)
+#define CONFIG_BT_NORMAL_HZ	            (96 * 1000000L)
+// #define CONFIG_BT_NORMAL_HZ	            (48 * 1000000L)
 //#define CONFIG_BT_CONNECT_HZ            (48 * 1000000L)
 
 //*********************************************************************************//

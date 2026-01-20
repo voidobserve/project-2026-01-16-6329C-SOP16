@@ -2,7 +2,7 @@
 <CodeBlocks_project_file>
 	<FileVersion major="1" minor="6" />
 	<Project>
-		<Option title="sm-rgbw-z" />
+		<Option title="森木-语音控制-RGBW" />
 		<Option compiler="q32s_lto_compiler" />
 		<Build>
 			<Target title="Release">
@@ -1006,10 +1006,6 @@
 		<Unit filename="board_ac632n_demo_cfg.h" />
 		<Unit filename="board_ac632n_demo_global_build_cfg.h" />
 		<Unit filename="board_config.h" />
-		<Extensions>
-			<code_completion />
-			<envvars />
-			<debugger />
-		</Extensions>
+		<Extensions />
 	</Project>
 </CodeBlocks_project_file>

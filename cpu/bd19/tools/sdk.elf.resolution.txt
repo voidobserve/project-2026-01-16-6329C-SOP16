@@ -1920,7 +1920,6 @@ obj/Release/apps/user_app/led_strip/led_strip_drive.o
 -r=obj/Release/apps/user_app/led_strip/led_strip_drive.o,pwr_on_effect_f1,l
 -r=obj/Release/apps/user_app/led_strip/led_strip_drive.o,sound_cnt,pl
 -r=obj/Release/apps/user_app/led_strip/led_strip_drive.o,sound,pl
--r=obj/Release/apps/user_app/led_strip/led_strip_drive.o,MIC_ENABLE,pl
 -r=obj/Release/apps/user_app/led_strip/led_strip_drive.o,sound_v,pl
 obj/Release/apps/user_app/led_strip/led_strip_sys.o
 -r=obj/Release/apps/user_app/led_strip/led_strip_sys.o,init_led_strip,pl
@@ -2019,7 +2018,6 @@ obj/Release/apps/user_app/rf24g/rf24g.o
 -r=obj/Release/apps/user_app/rf24g/rf24g.o,rf24g_scan,pl
 -r=obj/Release/apps/user_app/rf24g/rf24g.o,memcpy,l
 -r=obj/Release/apps/user_app/rf24g/rf24g.o,rf24g_long_timer,pl
--r=obj/Release/apps/user_app/rf24g/rf24g.o,printf,l
 -r=obj/Release/apps/user_app/rf24g/rf24g.o,get_rf24g_long_state,pl
 -r=obj/Release/apps/user_app/rf24g/rf24g.o,rf24g_scan_para,pl
 -r=obj/Release/apps/user_app/rf24g/rf24g.o,rf24g_rx_flag,pl
