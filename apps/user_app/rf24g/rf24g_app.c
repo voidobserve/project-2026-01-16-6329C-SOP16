@@ -255,101 +255,102 @@ void rf24_key_handle()
                 case RF24_K08:
                     soft_rurn_off_lights(); // 软关灯
                     break;
-
+                    // ===============================================================
                 case RF24_K09:
-                    fc_static_effect(0);
-
+                    colorful_light_set_static_color(RED);
                     break;
+                    // ===============================================================
                 case RF24_K10:
-                    fc_static_effect(1);
-
+                    colorful_light_set_static_color(GREEN);
                     break;
+                    // ===============================================================
                 case RF24_K11:
-                    fc_static_effect(2);
-
+                    colorful_light_set_static_color(BLUE);
                     break;
-                case RF24_K14:
-                    fc_static_effect(4);
-
-                    break;
-                case RF24_K15:
-                    fc_static_effect(5);
-
-                    break;
-                case RF24_K16:
-                    fc_static_effect(9);
-
-                    break;
-                case RF24_K13:
-                    fc_static_effect(8);
-
-                    break;
+                    // ===============================================================
                 case RF24_K12:
-                    fc_static_effect(3);
-
+                    colorful_light_set_static_color(PURE_WHITE);
                     break;
+                    // ===============================================================
+                case RF24_K13:
+                    colorful_light_set_static_color(ORANGE);
+                    break;
+                    // ===============================================================
+                case RF24_K14:
+                    colorful_light_set_static_color(YELLOW);
+                    break;
+                    // ===============================================================
+                case RF24_K15:
+                    colorful_light_set_static_color(CYAN);
+                    break;
+                // ===============================================================
+                case RF24_K16:
+                    colorful_light_set_static_color(PURPLE);
+                    break;
+                    // ===============================================================
                 case RF24_K17:
-                    ls_set_color(0, BLUE);
+                    // 三色跳变
+                    ls_set_color(0, RED);
                     ls_set_color(1, GREEN);
-                    ls_set_color(2, RED);
+                    ls_set_color(2, BLUE);
                     fc_effect.dream_scene.change_type = MODE_JUMP;
                     fc_effect.dream_scene.c_n = 3;
                     fc_effect.Now_state = IS_light_scene;
                     set_fc_effect();
                     break;
+                    // ===============================================================
                 case RF24_K18:
-                    ls_set_color(0, BLUE);
+                    // 七色跳变
+                    ls_set_color(0, RED);
                     ls_set_color(1, GREEN);
-                    ls_set_color(2, RED);
-                    ls_set_color(3, WHITE);
-                    ls_set_color(4, YELLOW);
-                    ls_set_color(5, CYAN);
-                    ls_set_color(6, PURPLE);
+                    ls_set_color(2, BLUE);
+                    ls_set_color(3, YELLOW);
+                    ls_set_color(4, CYAN);
+                    ls_set_color(5, MAGENTA);
+                    ls_set_color(6, PURE_WHITE);
                     fc_effect.dream_scene.change_type = MODE_JUMP;
                     fc_effect.dream_scene.c_n = 7;
                     fc_effect.Now_state = IS_light_scene;
                     set_fc_effect();
                     break;
+                    // ===============================================================
                 case RF24_K19:
-                    printf("\n RFKEY_FADE3");
+                    // 5种呼吸
                     extern void change_breath_mode(void);
-
                     change_breath_mode();
                     break;
+                    // ===============================================================
                 case RF24_K20:
-                    // ls_set_color(0, BLUE);
-                    // ls_set_color(1, GREEN);
-                    // ls_set_color(2, RED);
-                    // ls_set_color(3, WHITE);
-                    // ls_set_color(4, YELLOW);
-                    // ls_set_color(5, CYAN);
-                    // ls_set_color(6, PURPLE);
-                    fc_effect.dream_scene.change_type = MODE_GRADUAL;
-                    // fc_effect.dream_scene.c_n = 7;
+                    // 七色渐变
+                    fc_effect.dream_scene.change_type = MODE_GRADUAL; 
                     fc_effect.Now_state = IS_light_scene;
                     set_fc_effect();
                     break;
+                    // ===============================================================
                 case RF24_K21:
                     fc_effect.Now_state = IS_light_music;
                     fc_effect.music.m = 0;
                     set_fc_effect();
-
                     break;
+                    // ===============================================================
                 case RF24_K22:
                     fc_effect.Now_state = IS_light_music;
                     fc_effect.music.m = 1;
                     set_fc_effect();
                     break;
+                    // ===============================================================
                 case RF24_K23:
                     fc_effect.Now_state = IS_light_music;
                     fc_effect.music.m = 2;
                     set_fc_effect();
                     break;
+                    // ===============================================================
                 case RF24_K24:
                     fc_effect.Now_state = IS_light_music;
                     fc_effect.music.m = 3;
                     set_fc_effect();
                     break;
+                    // ===============================================================
 
                 } // switch
                 save_user_data_area3();

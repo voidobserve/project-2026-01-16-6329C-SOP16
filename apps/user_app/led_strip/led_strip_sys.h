@@ -44,8 +44,8 @@ typedef enum
 /* 定义灯珠颜色，五选1*/
 // #define LED_SRTIP_R
 // #define LED_SRTIP_RG
-#define LED_STRIP_RGB
-// #define LED_STRIP_RGBW
+// #define LED_STRIP_RGB
+#define LED_STRIP_RGBW 1
 // #define LED_STRIP_RGBCW
 
 /* 定义灯珠通道,取值1~5*/

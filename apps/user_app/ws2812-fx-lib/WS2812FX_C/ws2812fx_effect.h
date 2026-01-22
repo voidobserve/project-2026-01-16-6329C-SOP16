@@ -82,7 +82,10 @@ uint16_t WS2812FX_mode_mutil_twihkle(void);
 uint16_t WS2812FX_mode_multi_forward_same(void);
 uint16_t WS2812FX_mode_multi_back_same(void);
 
-
+uint16_t fc_music_gradual(void);
+uint16_t fc_music_breath(void);
+uint16_t fc_music_static(void);
+uint16_t fc_music_twinkle(void);
 
 
 

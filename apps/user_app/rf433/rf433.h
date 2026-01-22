@@ -18,7 +18,7 @@ typedef struct {
 } sys_cb_t;
 
 
-#define TCFG_RF433_ENABLE                   ENABLE_THIS_MOUDLE
+#define TCFG_RF433_ENABLE                   DISABLE_THIS_MOUDLE
 extern void rf433_gpio_init(void);
 
 

@@ -18,66 +18,58 @@
 #include "app_comm_bt.h"
 #include "app_main.h"
 #include "led_strand_effect.h"
-extern fc_effect_t fc_effect;//»Ã²ÊµÆ´®Ð§¹ûÊý¾Ý
+extern fc_effect_t fc_effect; // å¹»å½©ç¯ä¸²æ•ˆæžœæ•°æ®
 //******************************************************************************//
 //
 //
 //
 //
 //******************************************************************************//
-#define UART_CBUF_SIZE          0x100  
-#define UART_FRAM_SIZE          0x100   //µ¥´ÎÊý¾Ý°ü×î´óÖµ(Ã¿´Îcbuf»º´æ´ïµ½fram»ò´®¿ÚÊÕµ½Ò»´ÎÊý¾Ý, ¾Í»áÆðÒ»´ÎÖÐ¶Ï)
+#define UART_CBUF_SIZE 0x100
+#define UART_FRAM_SIZE 0x100 // å•æ¬¡æ•°æ®åŒ…æœ€å¤§å€¼(æ¯æ¬¡cbufç¼“å­˜è¾¾åˆ°framæˆ–ä¸²å£æ”¶åˆ°ä¸€æ¬¡æ•°æ®, å°±ä¼šèµ·ä¸€æ¬¡ä¸­æ–­)
 
-static u8 devBuffer_static[UART_CBUF_SIZE] __attribute__((aligned(4)));       //dev DMA memory
+static u8 devBuffer_static[UART_CBUF_SIZE] __attribute__((aligned(4))); // dev DMA memory
 
 const uart_bus_t *uart_bus_a;
 extern void printf_buf(u8 *buf, u32 len);
-extern void ble_send_user_data(u8 *buffer,u8 buffer_size);
+extern void ble_send_user_data(u8 *buffer, u8 buffer_size);
 u16 uart_a_send_api(uint8_t *data, u16 len);
 u8 uart_rx_flag = 1;
 u8 _rx_buf[300];
 u8 _rx_len = 0;
 
-
-
-//´®¿Ú½ÓÊÜ´¦Àí
+// ä¸²å£æŽ¥å—å¤„ç†
 void uart_rx_handler_a(void)
 {
     u8 len;
     // printf("uart_rx_handler_a\n");
-	if(uart_bus_a)
-	{
+    if (uart_bus_a)
+    {
         // uart_bus_a->write("aa",2);
 
-		len = uart_bus_a->read(_rx_buf, UART_FRAM_SIZE, 0);  //È«²¿ÊÕÆë
+        len = uart_bus_a->read(_rx_buf, UART_FRAM_SIZE, 0); // å…¨éƒ¨æ”¶é½
         _rx_len = len;
-		if(len>UART_FRAM_SIZE)
-		{
-			len = 0;
-			printf("uart overflow\n");
+        if (len > UART_FRAM_SIZE)
+        {
+            len = 0;
+            printf("uart overflow\n");
+        }
 
-		}
-
-         uart_rx_flag = 1;  
-        
-
-	
-
-	}
+        uart_rx_flag = 1;
+    }
 }
-
 
 static void user_uart_isr_cb(void *ut_bus, u32 status)
 {
     struct sys_event e;
 
     if (status == UT_RX || status == UT_RX_OT)
-	{
+    {
 #if FLOW_CONTROL
         uart1_flow_ctl_rts_suspend();
 #endif
         e.type = SYS_DEVICE_EVENT;
-        e.arg  = (void *)DEVICE_EVENT_FROM_BOARD_UART;
+        e.arg = (void *)DEVICE_EVENT_FROM_BOARD_UART;
         e.u.dev.event = 0;
         e.u.dev.value = 0;
         sys_event_notify(&e);
@@ -86,14 +78,14 @@ static void user_uart_isr_cb(void *ut_bus, u32 status)
 
 int ct_uart_init_a(u32 baud)
 {
-	struct uart_platform_data_t u_arg = {0};
+    struct uart_platform_data_t u_arg = {0};
     u_arg.tx_pin = IO_PORTA_07;
     u_arg.rx_pin = IO_PORTB_06;
 
     u_arg.rx_cbuf = devBuffer_static;
-    u_arg.rx_cbuf_size = UART_CBUF_SIZE; 
-    u_arg.frame_length = UART_FRAM_SIZE;  
-    u_arg.rx_timeout = 5;  //ms
+    u_arg.rx_cbuf_size = UART_CBUF_SIZE;
+    u_arg.frame_length = UART_FRAM_SIZE;
+    u_arg.rx_timeout = 5; // ms
     u_arg.isr_cbfun = user_uart_isr_cb;
     u_arg.baud = baud;
     u_arg.is_9bit = 0;
@@ -101,14 +93,12 @@ int ct_uart_init_a(u32 baud)
     uart_bus_a = uart_dev_open(&u_arg);
 
     if (uart_bus_a != NULL)
-	{
+    {
         printf("uart_dev_open() success\n");
         return 1;
     }
     return 0;
 }
-
-
 
 #if 0
 void tuya_UT1_putbyte(char a)
@@ -133,10 +123,9 @@ u16 uart_dev_test_send_api(uint8_t *data, u16 len)
 */
 u16 uart_a_send_api(uint8_t *data, u16 len)
 {
-    uart_bus_a->write(data,len);
+    uart_bus_a->write(data, len);
     return len;
 }
-
 
 void test_uart_a(void)
 {
@@ -144,186 +133,209 @@ void test_uart_a(void)
     u8 i = 0;
 
     static u8 count = 0;
-    if(count++ > 100){
+    if (count++ > 100)
+    {
         count = 0;
-        for(i = 0; i < 10; i++)
+        for (i = 0; i < 10; i++)
         {
             buf[i] = i;
         }
-        uart_a_send_api(buf,10);
+        uart_a_send_api(buf, 10);
         printf("uart_a_send_api\n");
     }
-  
 }
-
-
 
 void uart_key_handle(void)
 {
 
-    if(uart_rx_flag == 1)
+    if (uart_rx_flag == 1)
     {
-      
+
         uart_rx_flag = 0;
- 
-        printf_buf(_rx_buf,_rx_len);
 
-        if(_rx_buf[0] == 0xAA && _rx_buf[1] == 0xFA) {
+        printf_buf(_rx_buf, _rx_len);
 
-            
-            if(_rx_buf[2] == 0x00) {
-            	 
-                //´ò¿ªÐÇ¿Õ¶¥
-                if(fc_effect.on_off_flag == DEVICE_OFF)
+        if (_rx_buf[0] == 0xAA && _rx_buf[1] == 0xFA)
+        {
+
+            if (_rx_buf[2] == 0x00)
+            {
+
+                // æ‰“å¼€æ˜Ÿç©ºé¡¶
+                if (fc_effect.on_off_flag == DEVICE_OFF)
                 {
                     soft_turn_on_the_light();
                 }
+            }
+            else if (_rx_buf[2] == 0x01)
+            {
 
-            } else if(_rx_buf[2] == 0x01) {
-            	
-                //¹Ø±ÕÐÇ¿Õ¶¥
+                // å…³é—­æ˜Ÿç©ºé¡¶
                 soft_rurn_off_lights();
+            }
+            else if (_rx_buf[2] == 0x02)
+            {
 
-
-            } else if(_rx_buf[2] == 0x02) {
-            	
-                //´ò¿ªºìÉ«
+                // æ‰“å¼€çº¢è‰²
 
                 fc_static_effect(0);
-                if(fc_effect.on_off_flag == DEVICE_OFF)
+                if (fc_effect.on_off_flag == DEVICE_OFF)
                 {
                     soft_turn_on_the_light();
                 }
+            }
+            else if (_rx_buf[2] == 0x03)
+            {
 
-            } else if(_rx_buf[2] == 0x03) {
-            	
-                //´ò¿ªÂÌÉ«
+                // æ‰“å¼€ç»¿è‰²
                 fc_static_effect(1);
-                if(fc_effect.on_off_flag == DEVICE_OFF)
+                if (fc_effect.on_off_flag == DEVICE_OFF)
                 {
                     soft_turn_on_the_light();
                 }
-            } else if(_rx_buf[2] == 0x04) {
-            	
-                //´ò¿ªÀ¶É«
+            }
+            else if (_rx_buf[2] == 0x04)
+            {
+
+                // æ‰“å¼€è“è‰²
                 fc_static_effect(2);
-                if(fc_effect.on_off_flag == DEVICE_OFF)
+                if (fc_effect.on_off_flag == DEVICE_OFF)
                 {
                     soft_turn_on_the_light();
                 }
-            } else if(_rx_buf[2] == 0x05) {
-            	
-                //´ò¿ª°×É«
+            }
+            else if (_rx_buf[2] == 0x05)
+            {
 
-printf("open bai");
+                // æ‰“å¼€ç™½è‰²
+
+                printf("open bai");
                 fc_static_effect(3);
-                if(fc_effect.on_off_flag == DEVICE_OFF)
+                if (fc_effect.on_off_flag == DEVICE_OFF)
                 {
                     soft_turn_on_the_light();
                 }
-            } else if(_rx_buf[2] == 0x06) {
-            	
-                //´ò¿ª»ÆÉ«
+            }
+            else if (_rx_buf[2] == 0x06)
+            {
+
+                // æ‰“å¼€é»„è‰²
                 fc_static_effect(4);
-                if(fc_effect.on_off_flag == DEVICE_OFF)
+                if (fc_effect.on_off_flag == DEVICE_OFF)
                 {
                     soft_turn_on_the_light();
                 }
-            } else if(_rx_buf[2] == 0x07) {
-            	
-                //´ò¿ªÇàÉ«
+            }
+            else if (_rx_buf[2] == 0x07)
+            {
+
+                // æ‰“å¼€é’è‰²
                 fc_static_effect(5);
-                if(fc_effect.on_off_flag == DEVICE_OFF)
+                if (fc_effect.on_off_flag == DEVICE_OFF)
                 {
                     soft_turn_on_the_light();
                 }
-            } else if(_rx_buf[2] == 0x08) {
-            	
-                //´ò¿ª×ÏÉ«
+            }
+            else if (_rx_buf[2] == 0x08)
+            {
+
+                // æ‰“å¼€ç´«è‰²
                 fc_static_effect(7);
-                if(fc_effect.on_off_flag == DEVICE_OFF)
+                if (fc_effect.on_off_flag == DEVICE_OFF)
                 {
                     soft_turn_on_the_light();
                 }
-            } else if(_rx_buf[2] == 0x09) {
-            	
-                //´ò¿ªÀä°×
+            }
+            else if (_rx_buf[2] == 0x09)
+            {
 
-            } else if(_rx_buf[2] == 0x0a) {
-            	
-                //´ò¿ªÅ¯°×
+                // æ‰“å¼€å†·ç™½
+            }
+            else if (_rx_buf[2] == 0x0a)
+            {
 
-            } else if(_rx_buf[2] == 0x0b) {
-            	
-                //´ò¿ª½¥±ä
+                // æ‰“å¼€æš–ç™½
+            }
+            else if (_rx_buf[2] == 0x0b)
+            {
+
+                // æ‰“å¼€æ¸å˜
                 extern void yuyin_effect1(void);
                 yuyin_effect1();
-                if(fc_effect.on_off_flag == DEVICE_OFF)
+                if (fc_effect.on_off_flag == DEVICE_OFF)
                 {
                     soft_turn_on_the_light();
                 }
-            } else if(_rx_buf[2] == 0x0c) {
-            	
-                //´ò¿ªºôÎü
+            }
+            else if (_rx_buf[2] == 0x0c)
+            {
+
+                // æ‰“å¼€å‘¼å¸
                 void yuyin_effect2(void);
                 yuyin_effect2();
-                if(fc_effect.on_off_flag == DEVICE_OFF)
+                if (fc_effect.on_off_flag == DEVICE_OFF)
                 {
                     soft_turn_on_the_light();
                 }
-            } else if(_rx_buf[2] == 0x0d) {
-            	
-                //´ò¿ª°×¹âºôÎü
+            }
+            else if (_rx_buf[2] == 0x0d)
+            {
+
+                // æ‰“å¼€ç™½å…‰å‘¼å¸
                 yuyin_effect3();
-                if(fc_effect.on_off_flag == DEVICE_OFF)
+                if (fc_effect.on_off_flag == DEVICE_OFF)
                 {
                     soft_turn_on_the_light();
                 }
-            } else if(_rx_buf[2] == 0x0e) {
-            	
-                //´ò¿ªÉù¿Ø
+            }
+            else if (_rx_buf[2] == 0x0e)
+            {
+
+                // æ‰“å¼€å£°æŽ§
                 yuyin_music_effect();
-                if(fc_effect.on_off_flag == DEVICE_OFF)
+                if (fc_effect.on_off_flag == DEVICE_OFF)
                 {
                     soft_turn_on_the_light();
                 }
-            } else if(_rx_buf[2] == 0x0f) {
-            	
-                //´ò¿ª°×¹âÉù¿Ø
+            }
+            else if (_rx_buf[2] == 0x0f)
+            {
 
-            } else if(_rx_buf[2] == 0x10) {
-            	
-                //ÁÁ¶Èµ÷ÁÁµã
+                // æ‰“å¼€ç™½å…‰å£°æŽ§
+            }
+            else if (_rx_buf[2] == 0x10)
+            {
+
+                // äº®åº¦è°ƒäº®ç‚¹
                 bright_plus();
+            }
+            else if (_rx_buf[2] == 0x11)
+            {
 
-            } else if(_rx_buf[2] == 0x11) {
-            	
-                //ÁÁ¶Èµ÷°µµã
+                // äº®åº¦è°ƒæš—ç‚¹
                 bright_sub();
+            }
+            else if (_rx_buf[2] == 0x12)
+            {
 
-            } else if(_rx_buf[2] == 0x12) {
-            	
-                //ÁÁ¶Èµ÷µ½×îÁÁ
+                // äº®åº¦è°ƒåˆ°æœ€äº®
                 void max_bright(void);
                 max_bright();
+            }
+            else if (_rx_buf[2] == 0x13)
+            {
 
-            } else if(_rx_buf[2] == 0x13) {
-            	
-                //ÁÁ¶Èµ÷µ½×î°µ
+                // äº®åº¦è°ƒåˆ°æœ€æš—
                 void min_bright(void);
                 min_bright();
-            } 
-
+            }
         }
 
         save_user_data_area3();
-        memset(_rx_buf,0,sizeof(_rx_buf));
+        memset(_rx_buf, 0, sizeof(_rx_buf));
         _rx_len = 0;
-
     }
 }
-
-
 
 #if 0
 bool uart_dev_test_init_api(void)
