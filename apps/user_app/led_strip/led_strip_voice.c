@@ -1,9 +1,6 @@
 #include "led_strip_voice.h"
-// #include "led_strip_drive.h"
-// #include "led_strip_sys.h"
 #include "led_strand_effect.h"
-
-// volatile u8 music_trigger = 0; // 七彩灯的声控标志
+ 
 
 static volatile u8 flag_sound_triggered_in_motor = 0; // 标志位，电机声控模式下，触发声控，0--未触发，1--触发
 static volatile u8 flag_sound_triggered_in_colorful_light = 0;

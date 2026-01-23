@@ -68,10 +68,12 @@ void fc_data_init(void)
     fc_effect.music.m = 1;
     fc_effect.music.s = 80; // 灵敏度
     // 电机
-    fc_effect.base_ins.mode = 4;         // 360转
-    fc_effect.base_ins.period = 8;       // 速度8s
-    fc_effect.base_ins.dir = 0;          // 0: 正转  1：
-    fc_effect.base_ins.motor_on_off = 1; // 电机开
+    fc_effect.base_ins.period_index = 0;
+    // fc_effect.base_ins.period = 8;       // 速度8s
+    fc_effect.base_ins.period = motor_period[fc_effect.base_ins.period_index]; //
+    fc_effect.base_ins.mode = 4;                                               // 360转
+    fc_effect.base_ins.dir = 0;                                                // 0: 正转  1：
+    fc_effect.base_ins.motor_on_off = 1;                                       // 电机开
 }
 
 u16 bw_speed = 0;
@@ -377,6 +379,7 @@ void fb_led_on_off_state(void)
     zd_fb_2_app(Send_buffer, 3);
 }
 
+// 向app反馈亮度
 void fb_led_bright_state(void)
 {
     uint8_t Send_buffer[6];
@@ -397,16 +400,17 @@ void fb_led_speed_state(void)
     zd_fb_2_app(Send_buffer, 3);
 }
 
-void fb_motor_state(u8 p)
+void fb_motor_state(u8 state)
 {
     uint8_t Send_buffer[6];
     Send_buffer[0] = 0x2F;
     Send_buffer[1] = 0x08;
-    Send_buffer[2] = p;
+    Send_buffer[2] = state;
     extern void zd_fb_2_app(u8 * p, u8 len);
     zd_fb_2_app(Send_buffer, 3);
 }
-void fb_motor_period()
+
+void fb_motor_period(void)
 {
     uint8_t Send_buffer[6];
     Send_buffer[0] = 0x2F;
@@ -429,39 +433,31 @@ extern u8 temp_w_bright;
 /************************************** **************软件关机*****************************************************/
 void soft_rurn_off_lights(void) // 软关灯处理
 {
-
-    pwr_on_effect_f = 0;
-    pwr_on_effect_f1 = 0;
-    jianbian_start = 0;
-
-    if (fc_effect.w == 0)
-    {
-        WS2812FX_setSegment_colorOptions(
-            0,                        // 第0段
-            0, fc_effect.led_num - 1, // 起始位置，结束位置
-            &power_off_effect,        // 效果
-            0,                        // 颜色，WS2812FX_setColors设置
-            100,                      // 速度
-            FADE_XXSLOW);             // 选项，这里像素点大小：1
-        WS2812FX_start();
-    }
-
-    //===============  清灯状态  ===========
     fc_effect.on_off_flag = DEVICE_OFF;
-    music_trigger = 0;
+    WS2812FX_stop();
+
+    // pwr_on_effect_f = 0;
+    // pwr_on_effect_f1 = 0;
+    // jianbian_start = 0;
+    // if (fc_effect.w == 0)
+    // {
+    //     WS2812FX_setSegment_colorOptions(
+    //         0,                        // 第0段
+    //         0, fc_effect.led_num - 1, // 起始位置，结束位置
+    //         &power_off_effect,        // 效果
+    //         0,                        // 颜色，WS2812FX_setColors设置
+    //         100,                      // 速度
+    //         FADE_XXSLOW);             // 选项，这里像素点大小：1
+    //     WS2812FX_start();
+    // }
+
     fb_led_on_off_state();
-
-    //===============  关风扇  ===========
-    close_fan();
-
-    // ==========  关电机   ===========
-    one_wire_set_mode(6); // 配置模式
-    // os_time_dly(1);  //不能使用，会复位
-    enable_one_wire(); // 使用发送数据
+    close_fan();          // 关风扇
+    one_wire_set_mode(6); // 关闭电机
+    os_taskq_post("msg_task", 1, MSG_SEQUENCER_ONE_WIRE_SEND_INFO);
     fb_motor_state(0);
-    fc_effect.base_ins.motor_on_off = 0;
 
-    save_user_data_area3();
+    os_taskq_post("msg_task", 1, MSG_USER_SAVE_INFO);
     printf("soft_rurn_off_light!!\n");
 }
 
@@ -501,29 +497,30 @@ void special_w_close(void)
 /**************************************************软件开机*****************************************************/
 void soft_turn_on_the_light(void) // 软开灯处理
 {
-
-    pwr_on_effect_f = 1;
-    pwr_on_effect_f1 = 1;
-    bb = 1;
-    WS2812FX_setBrightness(1);
-    WS2812FX_start();
+    // pwr_on_effect_f = 1;
+    // pwr_on_effect_f1 = 1;
+    // bb = 1;
+    // WS2812FX_setBrightness(1);
     fc_effect.on_off_flag = DEVICE_ON;
-
-    //============  开风扇   ===========
-    open_fan();
-
-    //============  开电机   ===========
-    one_wire_set_mode(4);
-    // os_time_dly(1);//不能使用，会复位
-    enable_one_wire(); // 启动发送电机数据
-    fb_motor_state(1);
-
-    fc_effect.base_ins.motor_on_off = 1;
-    fb_led_on_off_state();
+    WS2812FX_start();
     set_fc_effect();
-    save_user_data_area3();
+    open_fan(); // 开风扇
+    if (DEVICE_ON == fc_effect.base_ins.motor_on_off)
+    {
+        // 如果在开机前，电机是开着的，则恢复电机在开机前的状态
+        if (6 == fc_effect.base_ins.mode)
+        {
+            // 如果电机的模式是6（关闭），则改为4
+            fc_effect.base_ins.mode = 4;
+        }
+    }
+    os_taskq_post("msg_task", 1, MSG_SEQUENCER_ONE_WIRE_SEND_INFO);
+    fb_motor_state(fc_effect.base_ins.motor_on_off);
+    fb_led_on_off_state();
 
-    printf("soft_turn_on_the_light!!\n");
+    os_taskq_post("msg_task", 1, MSG_USER_SAVE_INFO);
+
+    printf("soft_turn_on_the_light\n");
 }
 
 // 开机效果,控制亮度渐亮,定时10ms执行
@@ -1313,17 +1310,22 @@ void speed_fast(void)
     {
         fc_effect.dream_scene.speed = 10;
     }
+
     if (fc_effect.dream_scene.speed <= 10)
     {
         fc_effect.dream_scene.speed = 10;
-        // custom_index = 4;
-        // save_user_data_area3(); //只能放在fc_set_style_custom前
-        // fc_set_style_custom(); //自定义效果
-        // printf("\n speed_fast");
     }
-    // printf("fc_effect.dream_scene.speed = %d\n",fc_effect.dream_scene.speed);
-    fb_led_speed_state();
-    set_fc_effect();
+
+    // if (fc_effect.dream_scene.speed >= 10 + 100)
+    // {
+    //     fc_effect.dream_scene.speed -= 100;
+    // }
+    // else
+    // {
+    //     fc_effect.dream_scene.speed = 10;
+    // }
+
+    printf("fc_effect.dream_scene.speed = %u\n", fc_effect.dream_scene.speed);
 }
 
 void speed_slow(void)
@@ -1339,15 +1341,9 @@ void speed_slow(void)
     if (fc_effect.dream_scene.speed >= 500)
     {
         fc_effect.dream_scene.speed = 500;
-        // custom_index = 4;
-        // save_user_data_area3(); //只能放在fc_set_style_custom前
-        // fc_set_style_custom(); //自定义效果
-        // // set_fc_effect();
-        // printf("\n speed_slow");
     }
-    // printf("fc_effect.dream_scene.speed = %d\n",fc_effect.dream_scene.speed);
-    fb_led_speed_state();
-    set_fc_effect();
+
+    printf("fc_effect.dream_scene.speed = %u\n", fc_effect.dream_scene.speed);
 }
 
 // ------------------------------------------------亮度
@@ -1376,7 +1372,7 @@ void bright_plus(void)
         // }
         fc_effect.b = 255;
         WS2812FX_setBrightness(fc_effect.b);
-        save_user_data_area3(); // 只能放在fc_set_style_custom前
+        os_taskq_post("msg_task", 1, MSG_USER_SAVE_INFO);
         // fc_set_style_custom(); //自定义效果
         // set_fc_effect();
     }
@@ -1384,37 +1380,37 @@ void bright_plus(void)
     {
         fc_effect.b = bright_jst[1];
         WS2812FX_setBrightness(fc_effect.b);
-        save_user_data_area3();
+        os_taskq_post("msg_task", 1, MSG_USER_SAVE_INFO);
     }
     else if (fc_effect.b >= bright_jst[3])
     {
         fc_effect.b = bright_jst[2];
         WS2812FX_setBrightness(fc_effect.b);
-        save_user_data_area3();
+        os_taskq_post("msg_task", 1, MSG_USER_SAVE_INFO);
     }
     else if (fc_effect.b >= bright_jst[4])
     {
         fc_effect.b = bright_jst[3];
         WS2812FX_setBrightness(fc_effect.b);
-        save_user_data_area3();
+        os_taskq_post("msg_task", 1, MSG_USER_SAVE_INFO);
     }
     else if (fc_effect.b >= bright_jst[5])
     {
         fc_effect.b = bright_jst[4];
         WS2812FX_setBrightness(fc_effect.b);
-        save_user_data_area3();
+        os_taskq_post("msg_task", 1, MSG_USER_SAVE_INFO);
     }
     else if (fc_effect.b >= bright_jst[6])
     {
         fc_effect.b = bright_jst[5];
         WS2812FX_setBrightness(fc_effect.b);
-        save_user_data_area3();
+        os_taskq_post("msg_task", 1, MSG_USER_SAVE_INFO);
     }
     else if (fc_effect.b >= bright_jst[7])
     {
         fc_effect.b = bright_jst[6];
         WS2812FX_setBrightness(fc_effect.b);
-        save_user_data_area3();
+        os_taskq_post("msg_task", 1, MSG_USER_SAVE_INFO);
     }
     fb_led_bright_state();
 
@@ -1429,7 +1425,7 @@ void bright_sub(void)
         // custom_index = 4;
         fc_effect.b = bright_jst[7];
         WS2812FX_setBrightness(fc_effect.b);
-        save_user_data_area3();
+        os_taskq_post("msg_task", 1, MSG_USER_SAVE_INFO);
         // fc_set_style_custom(); //自定义效果
         // set_fc_effect();
     }
@@ -1437,37 +1433,37 @@ void bright_sub(void)
     {
         fc_effect.b = bright_jst[6];
         WS2812FX_setBrightness(fc_effect.b);
-        save_user_data_area3();
+        os_taskq_post("msg_task", 1, MSG_USER_SAVE_INFO);
     }
     else if (fc_effect.b <= bright_jst[4])
     {
         fc_effect.b = bright_jst[5];
         WS2812FX_setBrightness(fc_effect.b);
-        save_user_data_area3();
+        os_taskq_post("msg_task", 1, MSG_USER_SAVE_INFO);
     }
     else if (fc_effect.b <= bright_jst[3])
     {
         fc_effect.b = bright_jst[4];
         WS2812FX_setBrightness(fc_effect.b);
-        save_user_data_area3();
+        os_taskq_post("msg_task", 1, MSG_USER_SAVE_INFO);
     }
     else if (fc_effect.b <= bright_jst[2])
     {
         fc_effect.b = bright_jst[3];
         WS2812FX_setBrightness(fc_effect.b);
-        save_user_data_area3();
+        os_taskq_post("msg_task", 1, MSG_USER_SAVE_INFO);
     }
     else if (fc_effect.b <= bright_jst[1])
     {
         fc_effect.b = bright_jst[2];
         WS2812FX_setBrightness(fc_effect.b);
-        save_user_data_area3();
+        os_taskq_post("msg_task", 1, MSG_USER_SAVE_INFO);
     }
     else if (fc_effect.b <= bright_jst[0])
     {
         fc_effect.b = bright_jst[1];
         WS2812FX_setBrightness(fc_effect.b);
-        save_user_data_area3();
+        os_taskq_post("msg_task", 1, MSG_USER_SAVE_INFO);
     }
     fb_led_bright_state();
     printf("\n fc_effect.b = %d", fc_effect.b);

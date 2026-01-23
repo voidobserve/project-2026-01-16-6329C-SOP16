@@ -1,6 +1,9 @@
 #ifndef rf433_app_h
 #define rf433_app_h
 
+#include "rf433.h"
+
+#if TCFG_RF433_ENABLE
 
 //黑色遥控，FFFF
 //开启或关闭ble功能
@@ -70,5 +73,6 @@
 
 
 
+#endif
 #endif
 

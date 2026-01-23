@@ -114,6 +114,7 @@ void tuya_UT1_putbyte(char a)
         JL_UART1->CON0 |= BIT(13);
     }
 }
+
 /*
 u16 uart_dev_test_send_api(uint8_t *data, u16 len)
 {
@@ -124,6 +125,7 @@ u16 uart_dev_test_send_api(uint8_t *data, u16 len)
     return len;
 }
 */
+
 u16 uart_dev_test_send_api(uint8_t *data, u16 len)
 {
     uart_bus->write(data, len);

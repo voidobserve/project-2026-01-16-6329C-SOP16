@@ -19,12 +19,6 @@
 #include "app_main.h"
 #include "led_strand_effect.h"
 extern fc_effect_t fc_effect; // 幻彩灯串效果数据
-//******************************************************************************//
-//
-//
-//
-//
-//******************************************************************************//
 #define UART_CBUF_SIZE 0x100
 #define UART_FRAM_SIZE 0x100 // 单次数据包最大值(每次cbuf缓存达到fram或串口收到一次数据, 就会起一次中断)
 
@@ -33,10 +27,10 @@ static u8 devBuffer_static[UART_CBUF_SIZE] __attribute__((aligned(4))); // dev D
 const uart_bus_t *uart_bus_a;
 extern void printf_buf(u8 *buf, u32 len);
 extern void ble_send_user_data(u8 *buffer, u8 buffer_size);
-u16 uart_a_send_api(uint8_t *data, u16 len);
+// u16 uart_a_send_api(uint8_t *data, u16 len);
 u8 uart_rx_flag = 1;
-u8 _rx_buf[300];
-u8 _rx_len = 0;
+volatile u8 _rx_buf[300];
+volatile u8 _rx_len = 0;
 
 // 串口接受处理
 void uart_rx_handler_a(void)
@@ -79,7 +73,8 @@ static void user_uart_isr_cb(void *ut_bus, u32 status)
 int ct_uart_init_a(u32 baud)
 {
     struct uart_platform_data_t u_arg = {0};
-    u_arg.tx_pin = IO_PORTA_07;
+    // u_arg.tx_pin = IO_PORTA_07;
+    u_arg.tx_pin = -1;
     u_arg.rx_pin = IO_PORTB_06;
 
     u_arg.rx_cbuf = devBuffer_static;
@@ -127,214 +122,203 @@ u16 uart_a_send_api(uint8_t *data, u16 len)
     return len;
 }
 
-void test_uart_a(void)
-{
-    u8 buf[10] = {0};
-    u8 i = 0;
+// void test_uart_a(void)
+// {
+//     u8 buf[10] = {0};
+//     u8 i = 0;
 
-    static u8 count = 0;
-    if (count++ > 100)
-    {
-        count = 0;
-        for (i = 0; i < 10; i++)
-        {
-            buf[i] = i;
-        }
-        uart_a_send_api(buf, 10);
-        printf("uart_a_send_api\n");
-    }
-}
+//     static u8 count = 0;
+//     if (count++ > 100)
+//     {
+//         count = 0;
+//         for (i = 0; i < 10; i++)
+//         {
+//             buf[i] = i;
+//         }
+//         uart_a_send_api(buf, 10);
+//         printf("uart_a_send_api\n");
+//     }
+// }
 
 void uart_key_handle(void)
 {
-
-    if (uart_rx_flag == 1)
+    if (uart_rx_flag == 0)
     {
-
-        uart_rx_flag = 0;
-
-        printf_buf(_rx_buf, _rx_len);
-
-        if (_rx_buf[0] == 0xAA && _rx_buf[1] == 0xFA)
-        {
-
-            if (_rx_buf[2] == 0x00)
-            {
-
-                // 打开星空顶
-                if (fc_effect.on_off_flag == DEVICE_OFF)
-                {
-                    soft_turn_on_the_light();
-                }
-            }
-            else if (_rx_buf[2] == 0x01)
-            {
-
-                // 关闭星空顶
-                soft_rurn_off_lights();
-            }
-            else if (_rx_buf[2] == 0x02)
-            {
-
-                // 打开红色
-
-                fc_static_effect(0);
-                if (fc_effect.on_off_flag == DEVICE_OFF)
-                {
-                    soft_turn_on_the_light();
-                }
-            }
-            else if (_rx_buf[2] == 0x03)
-            {
-
-                // 打开绿色
-                fc_static_effect(1);
-                if (fc_effect.on_off_flag == DEVICE_OFF)
-                {
-                    soft_turn_on_the_light();
-                }
-            }
-            else if (_rx_buf[2] == 0x04)
-            {
-
-                // 打开蓝色
-                fc_static_effect(2);
-                if (fc_effect.on_off_flag == DEVICE_OFF)
-                {
-                    soft_turn_on_the_light();
-                }
-            }
-            else if (_rx_buf[2] == 0x05)
-            {
-
-                // 打开白色
-
-                printf("open bai");
-                fc_static_effect(3);
-                if (fc_effect.on_off_flag == DEVICE_OFF)
-                {
-                    soft_turn_on_the_light();
-                }
-            }
-            else if (_rx_buf[2] == 0x06)
-            {
-
-                // 打开黄色
-                fc_static_effect(4);
-                if (fc_effect.on_off_flag == DEVICE_OFF)
-                {
-                    soft_turn_on_the_light();
-                }
-            }
-            else if (_rx_buf[2] == 0x07)
-            {
-
-                // 打开青色
-                fc_static_effect(5);
-                if (fc_effect.on_off_flag == DEVICE_OFF)
-                {
-                    soft_turn_on_the_light();
-                }
-            }
-            else if (_rx_buf[2] == 0x08)
-            {
-
-                // 打开紫色
-                fc_static_effect(7);
-                if (fc_effect.on_off_flag == DEVICE_OFF)
-                {
-                    soft_turn_on_the_light();
-                }
-            }
-            else if (_rx_buf[2] == 0x09)
-            {
-
-                // 打开冷白
-            }
-            else if (_rx_buf[2] == 0x0a)
-            {
-
-                // 打开暖白
-            }
-            else if (_rx_buf[2] == 0x0b)
-            {
-
-                // 打开渐变
-                extern void yuyin_effect1(void);
-                yuyin_effect1();
-                if (fc_effect.on_off_flag == DEVICE_OFF)
-                {
-                    soft_turn_on_the_light();
-                }
-            }
-            else if (_rx_buf[2] == 0x0c)
-            {
-
-                // 打开呼吸
-                void yuyin_effect2(void);
-                yuyin_effect2();
-                if (fc_effect.on_off_flag == DEVICE_OFF)
-                {
-                    soft_turn_on_the_light();
-                }
-            }
-            else if (_rx_buf[2] == 0x0d)
-            {
-
-                // 打开白光呼吸
-                yuyin_effect3();
-                if (fc_effect.on_off_flag == DEVICE_OFF)
-                {
-                    soft_turn_on_the_light();
-                }
-            }
-            else if (_rx_buf[2] == 0x0e)
-            {
-
-                // 打开声控
-                yuyin_music_effect();
-                if (fc_effect.on_off_flag == DEVICE_OFF)
-                {
-                    soft_turn_on_the_light();
-                }
-            }
-            else if (_rx_buf[2] == 0x0f)
-            {
-
-                // 打开白光声控
-            }
-            else if (_rx_buf[2] == 0x10)
-            {
-
-                // 亮度调亮点
-                bright_plus();
-            }
-            else if (_rx_buf[2] == 0x11)
-            {
-
-                // 亮度调暗点
-                bright_sub();
-            }
-            else if (_rx_buf[2] == 0x12)
-            {
-
-                // 亮度调到最亮
-                void max_bright(void);
-                max_bright();
-            }
-            else if (_rx_buf[2] == 0x13)
-            {
-
-                // 亮度调到最暗
-                void min_bright(void);
-                min_bright();
-            }
-        }
-
-        save_user_data_area3();
-        memset(_rx_buf, 0, sizeof(_rx_buf));
-        _rx_len = 0;
+        return; // 如果串口没有数据，则返回
     }
+
+    uart_rx_flag = 0;
+
+    printf_buf(_rx_buf, _rx_len);
+    if ((_rx_buf[0] == 0xAA && _rx_buf[1] == 0xFA) == 0)
+    {
+        return;
+    }
+
+    // if (_rx_buf[0] == 0xAA && _rx_buf[1] == 0xFA)
+    // {
+
+    if (_rx_buf[2] == 0x00)
+    { 
+        // 打开星空顶
+        if (fc_effect.on_off_flag == DEVICE_OFF)
+        {
+            soft_turn_on_the_light();
+        }
+    }
+    else if (_rx_buf[2] == 0x01)
+    { 
+        // 关闭星空顶
+        soft_rurn_off_lights();
+    }
+    else if (_rx_buf[2] == 0x02)
+    { 
+        // 打开红色
+        colorful_light_set_static_color(RED);
+        // fc_static_effect(0);
+        if (fc_effect.on_off_flag == DEVICE_OFF)
+        {
+            soft_turn_on_the_light();
+        }
+    }
+    else if (_rx_buf[2] == 0x03)
+    {
+        // 打开绿色
+        // fc_static_effect(1);
+        colorful_light_set_static_color(GREEN);
+        if (fc_effect.on_off_flag == DEVICE_OFF)
+        {
+            soft_turn_on_the_light();
+        }
+    }
+    else if (_rx_buf[2] == 0x04)
+    { 
+        // 打开蓝色
+        // fc_static_effect(2);
+        colorful_light_set_static_color(BLUE);
+        if (fc_effect.on_off_flag == DEVICE_OFF)
+        {
+            soft_turn_on_the_light();
+        }
+    }
+    else if (_rx_buf[2] == 0x05)
+    {
+        // 打开白色
+        // fc_static_effect(3);
+        colorful_light_set_static_color(PURE_WHITE);
+        if (fc_effect.on_off_flag == DEVICE_OFF)
+        {
+            soft_turn_on_the_light();
+        }
+    }
+    else if (_rx_buf[2] == 0x06)
+    { 
+        // 打开黄色
+        // fc_static_effect(4);
+        colorful_light_set_static_color(YELLOW);
+        if (fc_effect.on_off_flag == DEVICE_OFF)
+        {
+            soft_turn_on_the_light();
+        }
+    }
+    else if (_rx_buf[2] == 0x07)
+    { 
+        // 打开青色
+        // fc_static_effect(5);
+        colorful_light_set_static_color(CYAN);
+        if (fc_effect.on_off_flag == DEVICE_OFF)
+        {
+            soft_turn_on_the_light();
+        }
+    }
+    else if (_rx_buf[2] == 0x08)
+    { 
+        // 打开紫色
+        // fc_static_effect(7);
+        colorful_light_set_static_color(PURPLE);
+        if (fc_effect.on_off_flag == DEVICE_OFF)
+        {
+            soft_turn_on_the_light();
+        }
+    }
+    else if (_rx_buf[2] == 0x09)
+    { 
+        // 打开冷白
+    }
+    else if (_rx_buf[2] == 0x0a)
+    { 
+        // 打开暖白
+    }
+    else if (_rx_buf[2] == 0x0b)
+    { 
+        // 打开渐变
+        extern void yuyin_effect1(void);
+        yuyin_effect1(); // 语音控制的灯光动画效果 
+        if (fc_effect.on_off_flag == DEVICE_OFF)
+        {
+            soft_turn_on_the_light();
+        }
+    }
+    else if (_rx_buf[2] == 0x0c)
+    { 
+        // 打开呼吸
+        void yuyin_effect2(void);
+        yuyin_effect2();
+        if (fc_effect.on_off_flag == DEVICE_OFF)
+        {
+            soft_turn_on_the_light();
+        }
+    }
+    else if (_rx_buf[2] == 0x0d)
+    { 
+        // 打开白光呼吸
+        yuyin_effect3();
+        if (fc_effect.on_off_flag == DEVICE_OFF)
+        {
+            soft_turn_on_the_light();
+        }
+    }
+    else if (_rx_buf[2] == 0x0e)
+    { 
+        // 打开声控
+        yuyin_music_effect();
+        if (fc_effect.on_off_flag == DEVICE_OFF)
+        {
+            soft_turn_on_the_light();
+        }
+    }
+    else if (_rx_buf[2] == 0x0f)
+    { 
+        // 打开白光声控
+    }
+    else if (_rx_buf[2] == 0x10)
+    { 
+        // 亮度调亮点
+        bright_plus();
+    }
+    else if (_rx_buf[2] == 0x11)
+    { 
+        // 亮度调暗点
+        bright_sub();
+    }
+    else if (_rx_buf[2] == 0x12)
+    { 
+        // 亮度调到最亮
+        void max_bright(void);
+        max_bright();
+    }
+    else if (_rx_buf[2] == 0x13)
+    { 
+        // 亮度调到最暗
+        void min_bright(void);
+        min_bright();
+    }
+    // }
+
+    // save_user_data_area3();
+    os_taskq_post("msg_task", 1, MSG_USER_SAVE_INFO);
+    memset(_rx_buf, 0, sizeof(_rx_buf));
+    _rx_len = 0;
 }
 
 #if 0

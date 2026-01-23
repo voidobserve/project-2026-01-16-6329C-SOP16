@@ -128,6 +128,15 @@ typedef struct
     u16 lenght;     //灯带长度
     u8  channel;    //通道
 }led_strip_t;
+
+enum
+{
+    MSG_SEQUENCER_NONE = 0x00,
+    MSG_SEQUENCER_ONE_WIRE_SEND_INFO, // 使能单线发送（控制电机） 
+
+    MSG_USER_SAVE_INFO, // 将数据写入flash
+};
+
 extern led_strip_t g_led_strip;
 extern u8 on_off_flag;
 extern u32 LED_LEDGTH;

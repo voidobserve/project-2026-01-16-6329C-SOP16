@@ -61,7 +61,9 @@ const struct task_info task_info_table[] = {
 #if (TUYA_DEMO_EN)
     {"user_deal", 7, 0, 512, 512}, // 定义线程 tuya任务调度
 #endif
-    {"led_task", 2, 0, 512, 512},
+
+    {"main_task", 2, 0, 512, 512}, // 灯光
+    {"msg_task", 3, 0, 256, 256},  // 用户消息处理线程
     {0, 0},
 };
 
@@ -341,127 +343,6 @@ void user_timer_init(void)
 }
 __initcall(user_timer_init);
 
-extern u16 check_mic_adc(void);
-u8 music_trigger = 0;
-// u32 adc,adc_av;
-#define SAMPLE_N 20
-u8 adc_v_n, adc_avrg_n, adc_total_n;
-u32 adc_sum = 0, adc_sum_n = 0;
-extern uint8_t met_trg;
-extern uint8_t trg_en;
-extern void set_music_oc_trg(u8 p);
-u8 i, j;
-u32 adc, adc_av, adc_all;
-u16 adc_v[SAMPLE_N]; // 记录20个ADC值
-u32 adc_avrg[10];    // 记录5个平均值
-u32 adc_total[15];   // __attribute__((aligned(4)));
-
-// 声控
-void sound_handle(void)
-{
-    extern u32 adc_get_value(u32 ch);
-    extern void WS2812FX_trigger();
-    u16 adc;
-    u8 i, trg, trg_v;
-    u32 adc_all, adc_ttl;
-
-    extern u32 adc_sample(u32 ch);
-    // 记录adc值
-    adc = adc_get_value(AD_CH_PA8);
-
-    // adc = adc_sample(AD_CH_PA8);
-    // printf("adc = %d", adc);
-    if (adc < 1000) // 当ADC值大于1000，说明硬件电路有问题
-    {
-
-        if (adc_sum_n < 2000)
-        {
-            adc_sum_n++;
-        }
-        if (adc_sum_n == 2000)
-        {
-            if (adc / (adc_sum / adc_sum_n) > 3)
-                return; // adc突变，大于平均值的3倍，丢弃改值
-            adc_sum = adc_sum - adc_sum / adc_sum_n;
-        }
-        adc_sum += adc;
-
-        adc_v_n %= SAMPLE_N;
-        adc_v[adc_v_n] = adc;
-        adc_v_n++;
-        adc_all = 0;
-        for (i = 0; i < SAMPLE_N; i++)
-        {
-            adc_all += adc_v[i];
-        }
-
-        adc_avrg_n %= 10;
-        adc_avrg[adc_avrg_n] = adc_all / SAMPLE_N;
-        adc_avrg_n++;
-        // printf("%d,",adc_all / SAMPLE_N);
-        adc_ttl = 0;
-        for (i = 0; i < 10; i++)
-        {
-            adc_ttl += adc_avrg[i];
-        }
-        memmove((u8 *)adc_total, (u8 *)adc_total + 4, 14 * 4);
-        adc_total[14] = adc_ttl / 10; // 总数平均值
-
-        // 查找峰值
-        trg = 0;
-        // if( adc_total[7] >= adc_total[6] &&
-        //     adc_total[7] >= adc_total[5] &&
-        //     adc_total[7] > adc_total[4] &&
-        //     adc_total[7] > adc_total[3] &&
-        //     adc_total[7] > adc_total[2] &&
-        //     adc_total[7] > adc_total[1] &&
-        //     adc_total[7] > adc_total[0] &&
-        //     adc_total[7] >= adc_total[8] &&
-        //     adc_total[7] >= adc_total[9] &&
-        //     adc_total[7] > adc_total[10] &&
-        //     adc_total[7] > adc_total[11] &&
-        //     adc_total[7] > adc_total[12] &&
-        //     adc_total[7] > adc_total[13] &&
-        //     adc_total[7] > adc_total[14]
-
-        //     )
-        {
-            if (adc_sum_n != 0)
-            {
-                extern void set_mss(uint16_t s);
-                set_mss(adc + (adc)*fc_effect.music.s / 100);
-                if (adc * fc_effect.music.s / 100 > adc_sum / adc_sum_n)
-                {
-                    // printf("\n adc=%d",adc);
-                    // printf("\n adc_sum/adc_sum_n=%d",adc_sum/adc_sum_n);
-
-                    // set_music_oc_trg((adc - adc_sum/adc_sum_n)*100 * fc_effect.music.s / 100/(adc_sum/adc_sum_n));
-
-                    extern void WS2812FX_trg(void);
-                    if (fc_effect.led_num < 90) // 太多点数处理不过来
-                                                //  WS2812FX_trg();
-                        extern void set_music_fs_trg(u8 p);
-                    // set_music_fs_trg((adc - adc_sum/adc_sum_n)*100 * fc_effect.music.s / 100/(adc_sum/adc_sum_n));
-
-                    trg = 200;
-                    met_trg = 1;
-                    trg_en = 1;
-                    music_trigger = 1;
-                    if (fc_effect.on_off_flag == DEVICE_ON && fc_effect.Now_state == IS_light_music)
-                        WS2812FX_trigger();
-                }
-
-                if (adc > adc_sum / adc_sum_n)
-                {
-                    set_music_oc_trg((adc - adc_sum / adc_sum_n) * 100 * fc_effect.music.s / 100 / (adc_sum / adc_sum_n));
-                    extern void set_music_fs_trg(u8 p);
-                    set_music_fs_trg((adc - adc_sum / adc_sum_n) * 100 * fc_effect.music.s / 100 / (adc_sum / adc_sum_n));
-                }
-            }
-        }
-    }
-}
-
 extern int ct_uart_init_a(u32 baud);
 extern void run_tick_per_10ms(void);
 extern void WS2812FX_service();
@@ -474,48 +355,118 @@ extern void bw_gradual_effect(void);
 extern void rf24_key_handle(void);
 extern void uart_key_handle(void);
 extern void power_on_effect(void);
-extern void test_uart_a(void);
+// extern void test_uart_a(void);
 extern void special_w_close(void);
+
+/*
+    处理用户消息的线程 user_msg_handle_task
+
+    给该线程发送消息，例如：
+    os_taskq_post("msg_task", 1, MSG_SEQUENCER_ONE_WIRE_SEND_INFO);
+*/
+void user_msg_handle_task(void *p)
+{
+    int msg[32] = {0};
+
+    while (1)
+    {
+        int ret = os_taskq_pend("msg_task", msg, 1);
+        if (OS_TASKQ != ret) // 类型不对
+        {
+            continue;
+        }
+
+        if (msg[0] != Q_USER) // 不是用户消息
+        {
+            continue;
+        }
+
+        // 打印接收到的消息
+        // for (u8 i =0; i < ARRAY_SIZE(msg); i++)
+        // {
+        //     printf("msg [%u]: %d\n", (u16)i, msg[i]);
+        // }
+
+        switch (msg[1])
+        {
+        case MSG_SEQUENCER_ONE_WIRE_SEND_INFO: // 使能单线发送
+        {
+            for (u8 i = 0; i < 5; i++) // 控制重复发送次数
+            {
+                while (is_one_wire_send_end()) // 如果还未发送完，继续等待
+                {
+                    // printf("one wire send wait\n");
+                    os_time_dly(1);
+                }
+
+                enable_one_wire();
+            }
+        }
+        break;
+        // ==================================================================
+        case MSG_USER_SAVE_INFO:
+        {
+            save_user_data_enable();
+        }
+        break;
+        }
+    } // while (1)
+}
+
 // 10ms调用一次
 void main_while(viod)
-{ 
- 
-    rf24_key_handle();
-    power_on_effect(); // 开机慢慢亮
-    special_w_close(); // w灯关机慢慢开，关灯比较特殊
-    bw_breath_effect();
-    bw_gradual_effect();
-    bw_effect3();
+{
+    while (1)
+    {
+        rf24_key_handle();
+        rf24g_long_timer();
 
-    uart_key_handle();
+        // USER_TO_DO 还不确定要不要慢慢点亮
+        // power_on_effect(); // 开机慢慢亮
+        // special_w_close(); // w灯关机慢慢开，关灯比较特殊
+        // bw_breath_effect();
+        // bw_gradual_effect();
+        // bw_effect3();
 
-    rf24g_long_timer();
+        uart_key_handle();
 
+        save_user_data_time_count_down();
+        save_user_data_handle();
+
+        os_time_dly(1); // 单位：10ms
+    }
+}
+
+void WS2812_circle_task(void)
+{
     sound_handle();
     run_tick_per_10ms();
     WS2812FX_service();
 }
 
-// OS_SEM LED_TASK_SEM;
-
 void my_main(void)
 {
-    printf("\n my_main");
-    extern void fc_data_init(void);
+    printf("my_main\n");
     extern void full_color_init(void);
 
     extern void read_flash_device_status_init(void);
     extern int mic_adc_init(void);
     led_gpio_init(); // RGB控制脚初始化
-    fan_gpio_init();
-    led_pwm_init();
+    fan_gpio_init(); // 风扇
+    led_pwm_init();  // RGB对应的pwm
 
     user_timer_init(); // 定时器2设置
-    mic_adc_init();
-    // mcu_com_init(); //电机GPIO初始化
+    mic_adc_init();    // 声控信号检测引脚初始化
+    mcu_com_init();    // 电机GPIO初始化
 
     ct_uart_init_a(9600);
     full_color_init();
 
-    sys_s_hi_timer_add(NULL, main_while, 10);
+    sys_s_hi_timer_add(NULL, WS2812_circle_task, 10);
+    task_create(user_msg_handle_task, NULL, "msg_task");
+    /*
+        这里要放到最后，防止调用 soft_turn_on_the_light() 给线程发送消息时，
+        接收消息的线程没有创建，导致收不到消息，最后一上电电机会不工作
+    */
+    task_create(main_while, NULL, "main_task");
 }

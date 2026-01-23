@@ -11,6 +11,7 @@
 				<Option type="1" />
 				<Option compiler="q32s_lto_compiler" />
 				<Compiler>
+					<Add option="-flto" />
 					<Add option="-Os" />
 					<Add option="-Wcast-align" />
 					<Add option="-Wundef" />
@@ -18,7 +19,6 @@
 					<Add option="-g" />
 					<Add option="-integrated-as" />
 					<Add option="-O0" />
-					<Add option="-flto" />
 					<Add option="-fallow-pointer-null" />
 					<Add option="-Wincompatible-pointer-types" />
 					<Add option="-fprefer-gnu-section" />
@@ -126,8 +126,10 @@
 					<Add directory="../../../user_app/rf433" />
 					<Add directory="../../../user_app/one_wire" />
 					<Add directory="../../../user_app/rf24g" />
+					<Add directory="D:/A_WorkSt/Aworkst/2026-01-16-森木/code/project-2026-01-16-6329C-SOP16/apps/user_app/ir_key" />
 				</Compiler>
 				<Linker>
+					<Add option="-flto" />
 					<Add option="--plugin-opt=-inline-threshold=5" />
 					<Add option="--plugin-opt=save-temps" />
 					<Add option="--plugin-opt=-inline-normal-into-special-section=true" />
@@ -695,6 +697,21 @@
 		<Unit filename="../../../common/update/update.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="../../../user_app/ad_key/ad_key_app.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../user_app/ad_key/ad_key_app.h" />
+		<Unit filename="../../../user_app/ad_key/adkey.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../user_app/ad_key/adkey.h" />
+		<Unit filename="../../../user_app/ir_key/ir_key.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../user_app/ir_key/ir_key_app.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../user_app/ir_key/ir_key_app.h" />
 		<Unit filename="../../../user_app/led_strip/led_strand_effect.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -707,6 +724,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../../../user_app/led_strip/led_strip_sys.h" />
+		<Unit filename="../../../user_app/led_strip/led_strip_voice.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../user_app/led_strip/led_strip_voice.h" />
 		<Unit filename="../../../user_app/one_wire/one_wire.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -735,6 +756,9 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../../../user_app/save_flash/save_flash.h" />
+		<Unit filename="../../../user_app/uart/uart.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="../../../user_app/uart/uart_a.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -744,6 +768,11 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../../../user_app/ws2812-fx-lib/WS2812FX_C/WS2812FX.H" />
+		<Unit filename="../../../user_app/ws2812-fx-lib/WS2812FX_C/binary.h" />
+		<Unit filename="../../../user_app/ws2812-fx-lib/WS2812FX_C/my_effect.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../user_app/ws2812-fx-lib/WS2812FX_C/my_effect.h" />
 		<Unit filename="../../../user_app/ws2812-fx-lib/WS2812FX_C/ws2812_bsp.h" />
 		<Unit filename="../../../user_app/ws2812-fx-lib/WS2812FX_C/ws2812_drive.c">
 			<Option compilerVar="CC" />

@@ -191,17 +191,17 @@ void tow_led_drive(u16 b, u16 w, u16 bright)
 
 int mic_adc_init(void)
 {
-    adc_add_sample_ch(AD_CH_PA8); // 注意：初始化AD_KEY之前，先初始化ADC
-    gpio_set_die(IO_PORTA_08, 0);
-    gpio_set_direction(IO_PORTA_08, 1);
-    gpio_set_pull_down(IO_PORTA_08, 0);
+    adc_add_sample_ch(MIC_AD_CHANNEL); // 注意：初始化AD_KEY之前，先初始化ADC
+    gpio_set_die(MIC_PIN, 0);
+    gpio_set_direction(MIC_PIN, 1);
+    gpio_set_pull_down(MIC_PIN, 0);
 
     return 0;
 }
 
 u16 check_mic_adc(void)
 {
-    return adc_get_value(AD_CH_PA8);
+    return adc_get_value(MIC_AD_CHANNEL);
 }
 
 #define MAX_SOUND 10

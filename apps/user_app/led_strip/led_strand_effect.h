@@ -134,4 +134,10 @@ void colorful_light_set_static_color(u32 color);
 
 void change_breath_mode(void);
 
+
+void fb_led_bright_state(void);
+void fb_led_speed_state(void);
+void fb_motor_state(u8 state);
+void fb_motor_period(void);
+
 #endif

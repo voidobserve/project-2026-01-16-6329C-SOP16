@@ -3,9 +3,12 @@
 #include "system/includes.h"
 #include "one_wire.h"
 #include "led_strand_effect.h"
-u16 send_base_ins = 0;
+#include "led_strip_voice.h"
+
+volatile u16 send_base_ins = 0;
 // u8 period[6] = {8, 13, 18, 21, 26, 35};  //转速  app指令，需要将8 13 18 21 26 转换成相应的16进制  天奕光纤灯
-u8 period[6] = {8, 11, 14, 17, 20, 35}; // 转速  app指令，需要将8 13 18 21 26 转换成相应的16进制   //森木光纤灯
+// u8 motor_period[6] = {8, 11, 14, 17, 20, 35}; // 转速  app指令，需要将8 13 18 21 26 转换成相应的16进制   //森木光纤灯
+u8 motor_period[5] = {8, 11, 14, 17, 20}; // 转速  app指令，需要将8 13 18 21 26 转换成相应的16进制   //森木光纤灯
 
 /**
  * @brief  mcu通讯接口
@@ -19,6 +22,32 @@ void mcu_com_init(void)
     gpio_direction_output(MOTOR_CTL_PIN, 1);
 }
 
+// USER_TO_DO 如果新版程序通过，待删除该程序
+// /**
+//  * @brief 打包基本数据  数据包
+//  *
+//  */
+// void pack_base(void)
+// {
+//     u8 p;
+//     send_base_ins = 0;
+//     send_base_ins |= fc_effect.base_ins.mode;
+
+//     for (p = 0; p < 6; p++)
+//     {
+//         if (period[p] == fc_effect.base_ins.period)
+//         {
+//             break;
+//         }
+//     }
+//     if (p > 5)
+//         p = 0;
+//     send_base_ins |= p << 3;
+
+//     if (fc_effect.base_ins.dir)
+//         send_base_ins |= BIT(6);
+// }
+
 /**
  * @brief 打包基本数据  数据包
  *
@@ -27,52 +56,73 @@ void pack_base(void)
 {
     u8 p;
     send_base_ins = 0;
-    send_base_ins |= fc_effect.base_ins.mode;
-
-    for (p = 0; p < 6; p++)
-    {
-        if (period[p] == fc_effect.base_ins.period)
-        {
-            break;
-        }
-    }
-    if (p > 5)
-        p = 0;
-    send_base_ins |= p << 3;
+    send_base_ins |= fc_effect.base_ins.mode; // bit0 ~ bit2 电机模式
 
     if (fc_effect.base_ins.dir)
-        send_base_ins |= BIT(6);
+    {
+        send_base_ins |= BIT(6); // bit6 0:正转，1:反转
+    }
+
+    send_base_ins |= fc_effect.base_ins.period << 8; // 电机速度（控制电机周期：旋转一周的时间）
 }
 
-#define INS_LEN 7 // 指令长度
+#define INS_LEN 16 // 指令长度
 #define W_0_5MS 4 // 脉宽0.5ms
 #define W_1MS 8
 #define W_2MS 16
-u8 send_cnt = 0;
-u8 step = 0;
-u8 _125ms_cnt = 0;
-u8 h_l = 0;     // 0:输出低电平，1：高电平
-u8 send_en = 0; // 0:不发送， 1：发送   使能变量
+static volatile u8 send_cnt = 0;
+static volatile u8 step = 0;       // 控制发送阶段的状态机
+static volatile u8 _125ms_cnt = 0; // 125us
+static volatile u8 h_l = 0;        // 0:输出低电平，1：高电平
+static volatile u8 send_en = 0;    // 0:不发送， 1：发送   使能变量
+
+static volatile u16 count_ = 0;
+
+u8 is_one_wire_send_end(void)
+{
+    return send_en;
+}
+
+void one_wire_send_enable(void)
+{
+    send_en = 1;
+}
 
 /**
  * @brief 构造单线通讯协议，16bit  构造波形
- *
- * @param dat
+
  */
-void __attribute__((weak)) make_one_wire(u16 dat)
+static volatile u8 flag_is_just_begin = 1; // 标志位，是否刚开始进入发送；0--否，1--是
+void __attribute__((weak)) make_one_wire(void)
 {
-    static u16 count_ = 0;
+    static volatile u16 dat = 0;
+
     if (send_en == 0)
     {
-        count_ = 0;
+        flag_is_just_begin = 1;
         return;
     }
+
+    if (flag_is_just_begin)
+    {
+        flag_is_just_begin = 0;
+        count_ = 0;
+        h_l = 0;
+        send_cnt = 0;
+        step = 0;
+
+        dat = send_base_ins; // 每次发送只获取一次数据，避免重复获取
+        // printf("just begin\n");
+    }
+
+    // printf("dat == 0x %x\n", (u16)dat); // 这里打印看不出问题
+
     switch (step)
     {
     case 0: // 起始位
         /***********************************************************/
         // 解决了app发送指令的，波形不正确的问题，但是问题愿意未清晰
-        if (count_ <= 40) // 5ms
+        if (count_ <= 40) // 2.5ms
         {
             count_++;
             return;
@@ -94,7 +144,7 @@ void __attribute__((weak)) make_one_wire(u16 dat)
         }
         else
         {
-            // gpio_direction_output(IO_PORTA_00, 1);
+            // gpio_direction_output(MOTOR_CTL_PIN, 1);
             _125ms_cnt++;
 
             if (_125ms_cnt == W_1MS)
@@ -107,10 +157,10 @@ void __attribute__((weak)) make_one_wire(u16 dat)
         }
         break;
 
-    case 1:
+    case 1: // 发送中
         if (h_l == 0)
         {
-            // gpio_direction_output(IO_PORTA_00, 0);
+            // gpio_direction_output(MOTOR_CTL_PIN, 0);
             _125ms_cnt++;
 
             if (_125ms_cnt == W_0_5MS)
@@ -125,7 +175,7 @@ void __attribute__((weak)) make_one_wire(u16 dat)
         {
             if ((dat >> send_cnt) & 0x01) // 1
             {
-                // gpio_direction_output(IO_PORTA_00, 1);
+                // gpio_direction_output(MOTOR_CTL_PIN, 1);
                 _125ms_cnt++;
 
                 if (_125ms_cnt == W_1MS)
@@ -145,7 +195,7 @@ void __attribute__((weak)) make_one_wire(u16 dat)
             }
             else
             {
-                // gpio_direction_output(IO_PORTA_00, 1);
+                // gpio_direction_output(MOTOR_CTL_PIN, 1);
                 _125ms_cnt++;
                 if (_125ms_cnt == W_0_5MS)
                 {
@@ -165,7 +215,7 @@ void __attribute__((weak)) make_one_wire(u16 dat)
 
         break;
 
-    case 2:
+    case 2: // 发送结束
         if (h_l == 0)
         {
             gpio_direction_output(MOTOR_CTL_PIN, 0);
@@ -177,31 +227,46 @@ void __attribute__((weak)) make_one_wire(u16 dat)
                 _125ms_cnt = 0;
                 step = 0;
                 send_cnt = 0;
-                send_en = 0; // 等待下一次触发
+                send_en = 0;            // 等待下一次触发
+                flag_is_just_begin = 1; // 发送完成，清除该标志位，等待下一次发送
+
+                // printf("send end\n");
             }
         }
         break;
     }
-    //  gpio_direction_output(IO_PORTA_01, 0);
 }
 
-void enable_one_wire(void) // 数据发送使能
+// 数据发送使能
+void enable_one_wire(void)
 {
-    pack_base();
-
+    send_en = 0;
+    flag_is_just_begin = 1;
+    pack_base(); // 打包数据
     send_en = 1;
 }
 
 /**
- * @brief 125ms调用一次  放在定时器使用
+ * @brief 125us 调用一次  放在定时器使用
  *
  */
 // AT_VOLATILE_RAM_CODE
 void one_wire_send(void)
 {
+    /*
+        发送未使能，不发送
 
-    // pack_base();
-    make_one_wire(send_base_ins);
+        测试发现，即使准备发送的数据打印出来没有问题，
+        实际观察发现电机转速变了
+
+        可能是中断导致数组访问冲突，还未准备完数据就已经有中断
+    */
+    if (!is_one_wire_send_end())
+    {
+        return;
+    }
+
+    make_one_wire();
 }
 
 // -------------------------------------------------------------------API
@@ -219,7 +284,7 @@ void one_wire_send(void)
 void one_wire_set_mode(u8 m)
 {
     fc_effect.base_ins.mode = m;
-    printf("base_ins.mode = %d", fc_effect.base_ins.mode);
+    printf("base_ins.mode = %u\n", (u16)fc_effect.base_ins.mode);
 }
 /**
  * @brief 设置电机转速
@@ -228,18 +293,23 @@ void one_wire_set_mode(u8 m)
  */
 void one_wire_set_period(u8 p)
 {
+    if (fc_effect.base_ins.mode == 0x05)
+    {
+        // 如果是声控模式，不设置转速
+        return;
+    }
     fc_effect.base_ins.period = p;
-    printf("base_ins.period = %d", fc_effect.base_ins.period);
+    printf("base_ins.period = %u\n", (u16)fc_effect.base_ins.period);
 }
-/**
- * @brief 设置电机正反转
- *
- */
-void one_wire_set_dir(void)
-{
-    printf("base_ins.dir = %d", fc_effect.base_ins.dir);
-    fc_effect.base_ins.dir = !fc_effect.base_ins.dir;
-}
+// /**
+//  * @brief 设置电机正反转
+//  *
+//  */
+// void one_wire_set_dir(void)
+// {
+//     printf("base_ins.dir = %d", fc_effect.base_ins.dir);
+//     fc_effect.base_ins.dir = !fc_effect.base_ins.dir;
+// }
 /**
  * @brief Get the stepmotor mode object
  * 获取电机当前模式
@@ -248,7 +318,7 @@ void one_wire_set_dir(void)
  */
 u8 get_stepmotor_mode(void)
 {
-    printf(" base_ins.mode = %d", fc_effect.base_ins.mode);
+    printf("base_ins.mode = %u\n", (u16)fc_effect.base_ins.mode);
     return fc_effect.base_ins.mode;
 }
 
@@ -285,39 +355,17 @@ void stepmotor_music_maxSpeed(void)
     fc_effect.base_ins.period = 8;
 }
 
-void set_stepmotor_music_mode(void)
-{
-
-    switch (fc_effect.base_ins.music_mode)
-    {
-    case 0:
-
-        stepmotor_direction();
-        enable_one_wire(); // 使用发送数据
-        break;
-    case 1:
-
-        stepmotor_music_minSpeed();
-        enable_one_wire(); // 使用发送数据
-        break;
-    case 2:
-
-        stepmotor_music_maxSpeed();
-        enable_one_wire(); // 使用发送数据
-        break;
-    }
-}
-
 /**
  * @brief 设置是最慢
  *
  */
 void set_stepmotor_slow(void)
 {
+    // 如果速度不是最慢的
     if (fc_effect.base_ins.period != 26)
     {
         stepmotor_music_minSpeed();
-        enable_one_wire(); // 使用发送数据
+        os_taskq_post("msg_task", 1, MSG_SEQUENCER_ONE_WIRE_SEND_INFO);
     }
 }
 
@@ -327,10 +375,11 @@ void set_stepmotor_slow(void)
  */
 void set_stepmotor_fast(void)
 {
+    // 如果速度不是最快的
     if (fc_effect.base_ins.period != 8)
     {
         stepmotor_music_maxSpeed();
-        enable_one_wire(); // 使用发送数据
+        os_taskq_post("msg_task", 1, MSG_SEQUENCER_ONE_WIRE_SEND_INFO);
     }
 }
 
@@ -342,25 +391,28 @@ void set_stepmotor_fast(void)
 u8 stepmotor_sound_cnt = 0;
 void effect_stepmotor(void)
 {
-
-    if (fc_effect.base_ins.mode == 0x05)
+    if (fc_effect.base_ins.mode != 0x05)
     {
+        return; // 不处于声控模式，直接返回
+    }
 
-        if (get_sound_result())
-        {
-            set_stepmotor_fast();
+    if (get_sound_triggered_by_motor())
+    {
+        clear_sound_triggered_by_motor();
+        set_stepmotor_fast();
+        stepmotor_sound_cnt = 0;
 
-            stepmotor_sound_cnt = 0;
-        }
+        printf("mode fast\n");
+    }
 
-        if (stepmotor_sound_cnt < 100)
-        {
-            stepmotor_sound_cnt++;
-        }
-        if (stepmotor_sound_cnt >= 100)
-        {
-            set_stepmotor_slow();
-        }
+    if (stepmotor_sound_cnt < 100)
+    {
+        stepmotor_sound_cnt++;
+    }
+    if (stepmotor_sound_cnt >= 100)
+    {
+        set_stepmotor_slow();
+        printf("mode slow\n");
     }
 }
 
@@ -376,6 +428,7 @@ void clean_stepmorot_flag(void)
     set_time = 1;
     long_key = 0; // 长按立即停的标志
 }
+
 // 10计时
 void stepmotor(void)
 {
@@ -395,7 +448,7 @@ void stepmotor(void)
         if (stop_cnt == temp * 100)
         {
             one_wire_set_mode(6);
-            enable_one_wire();
+            os_taskq_post("msg_task", 1, MSG_SEQUENCER_ONE_WIRE_SEND_INFO);
             clean_stepmorot_flag();
         }
         else

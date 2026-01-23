@@ -612,6 +612,7 @@ extern u8 jianbian_start;
 // 颜色数量fc_effect.dream_scene.c_n
 uint16_t WS2812FX_mutil_c_gradual(void)
 {
+#if 0
     static u8 index;
     u32 rgb;
     static u8 pp = 0;
@@ -653,6 +654,48 @@ uint16_t WS2812FX_mutil_c_gradual(void)
         }
         return (_seg->speed / 5);
     }
+#endif
+    static uint8_t index;
+    uint32_t rgb;
+    static uint32_t c0, c1;
+    int lum = _seg_rt->counter_mode_step;
+    if (lum > 255)
+        lum = 511 - lum; // lum = 0 -> 255 -> 0
+    if (_seg_rt->aux_param == 0)
+    {
+        _seg_rt->aux_param = 1;
+        index = 0;
+        c1 = _seg->colors[index];
+        index++;
+        c0 = _seg->colors[index];
+    }
+    // _seg->colors[1]:目标颜色
+    uint32_t color = WS2812FX_color_blend(c1, c0, lum);
+
+    Adafruit_NeoPixel_fill(color, _seg->start, _seg_len);
+
+    if (_seg_rt->counter_mode_step == 256)
+    {
+        index++;
+        index %= _seg->c_n;
+        // rgb = ( (uint32_t)_seg->colors[index].r << 16 ) |
+        //         ( (uint32_t)_seg->colors[index].g << 8 ) |
+        //         ( (uint32_t)_seg->colors[index].b ) ;
+
+        // _seg->colors[0] = color;
+        c1 = _seg->colors[index];
+    }
+
+    _seg_rt->counter_mode_step++;
+    if (_seg_rt->counter_mode_step > 511)
+    {
+        _seg_rt->counter_mode_step = 0;
+        index++;
+        index %= _seg->c_n;
+        c0 = _seg->colors[index];
+        SET_CYCLE;
+    }
+    return (_seg->speed / 5);
 }
 // 整条灯带呼吸，每次呼吸切换颜色
 uint16_t mutil_c_breath(void)
@@ -864,8 +907,16 @@ uint16_t fc_music_breath(void)
 
 // 定色，触发换颜色
 uint16_t fc_music_static(void)
-{ 
-    uint32_t color ;
+{
+    u16 ret = 0xffff;
+    if (0 == _seg_rt->counter_mode_call)
+    {
+        // 如果刚进入该动画，让所有灯光熄灭（避免上一轮动画的残留）
+        Adafruit_NeoPixel_fill(BLACK, _seg->start, _seg_len);
+        return ret;
+    }
+
+    uint32_t color;
     if (get_sound_triggered_by_colorful_light())
     {
         clear_sound_triggered_by_colorful_light();
@@ -875,23 +926,19 @@ uint16_t fc_music_static(void)
         Adafruit_NeoPixel_fill(color, _seg->start, _seg_len);
     }
 
-    return 0xffff;
+    return ret;
 }
 
 // 定色，触发黑->爆闪一下，每次变色
 uint16_t fc_music_twinkle(void)
 {
-    extern u8 music_trigger;
-    uint32_t color1;
-    if (music_trigger)
+    uint32_t color;
+    if (get_sound_triggered_by_colorful_light())
     {
-        // if(_seg_rt->counter_mode_step == 0)
-        {
-            color1 = WS2812FX_color_wheel(_seg_rt->aux_param);
-            _seg_rt->aux_param += 20;
-        }
-        music_trigger = 0;
-        Adafruit_NeoPixel_fill(color1, _seg->start, _seg_len);
+        clear_sound_triggered_by_colorful_light();
+        color = WS2812FX_color_wheel(_seg_rt->aux_param);
+        _seg_rt->aux_param += 20;
+        Adafruit_NeoPixel_fill(color, _seg->start, _seg_len);
     }
     else
     {

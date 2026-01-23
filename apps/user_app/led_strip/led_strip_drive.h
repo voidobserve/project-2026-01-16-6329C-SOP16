@@ -5,7 +5,8 @@
 #include "board_ac632n_demo_cfg.h"
 #include "asm/ledc.h"
 #include "asm/gpio.h"
-#define MIC_PIN     IO_PORTB_06
+#define MIC_PIN     IO_PORTA_08
+#define MIC_AD_CHANNEL AD_CH_PA8
 #define LEDC_PIN    IO_PORTB_07
 
 #define FAN_CTL_PIN IO_PORT_DM // 风扇控制脚

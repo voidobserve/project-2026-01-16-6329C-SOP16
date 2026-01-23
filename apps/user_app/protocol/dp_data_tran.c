@@ -248,7 +248,8 @@ void yuyin_effect1(void)
     ls_set_color(0, BLUE);
     ls_set_color(1, GREEN);
     ls_set_color(2, RED);
-    ls_set_color(3, WHITE);
+    // ls_set_color(3, WHITE);
+    ls_set_color(3, PURE_WHITE);
     ls_set_color(4, YELLOW);
     ls_set_color(5, CYAN);
     ls_set_color(6, PURPLE);
@@ -263,7 +264,8 @@ void yuyin_effect2(void)
     ls_set_color(0, BLUE);
     ls_set_color(1, GREEN);
     ls_set_color(2, RED);
-    ls_set_color(3, WHITE);
+    // ls_set_color(3, WHITE);
+    ls_set_color(3, PURE_WHITE);
     ls_set_color(4, YELLOW);
     ls_set_color(5, CYAN);
     ls_set_color(6, PURPLE);
@@ -275,15 +277,20 @@ void yuyin_effect2(void)
 
 void yuyin_effect3(void)
 {
-    fc_effect.dream_scene.change_type = MODE_BREATH_W;
+    // fc_effect.dream_scene.change_type = MODE_BREATH_W;
+    // fc_effect.Now_state = IS_light_scene;
+
+    ls_set_color(0, PURE_WHITE);
+    ls_set_color(1, BLACK);
+    fc_effect.dream_scene.change_type = MODE_SINGLE_C_BREATH;
+    fc_effect.dream_scene.c_n = 2;
     fc_effect.Now_state = IS_light_scene;
     set_fc_effect();
 }
 
 void yuyin_music_effect(void)
 {
-    fc_effect.Now_state = IS_light_music;
-
+    fc_effect.Now_state = IS_light_music; 
     fc_effect.music.m++;
     fc_effect.music.m %= 4;
     set_fc_effect();
@@ -565,7 +572,14 @@ void parse_zd_data(unsigned char *LedCommand)
                     break;
 
                 case 0x11:
-                    fc_effect.dream_scene.change_type = MODE_BREATH_W;
+                    // 白色呼吸
+                    // fc_effect.dream_scene.change_type = MODE_BREATH_W;
+                    // fc_effect.Now_state = IS_light_scene;
+
+                    ls_set_color(0, PURE_WHITE);
+                    ls_set_color(1, BLACK);
+                    fc_effect.dream_scene.change_type = MODE_SINGLE_C_BREATH;
+                    fc_effect.dream_scene.c_n = 2;
                     fc_effect.Now_state = IS_light_scene;
                     break;
 
@@ -593,7 +607,8 @@ void parse_zd_data(unsigned char *LedCommand)
                     fc_effect.Now_state = IS_light_scene;
                     break;
 
-                case 0x15: // 七色频闪
+                case 0x15:
+                    // 七色频闪
                     ls_set_color(0, BLUE);
                     ls_set_color(1, GREEN);
                     ls_set_color(2, RED);
@@ -687,12 +702,16 @@ void parse_zd_data(unsigned char *LedCommand)
                     fc_effect.Now_state = IS_light_scene;
                     break;
                 case 0x20:
-                    printf("\n 0x20");
                     fc_effect.dream_scene.change_type = MODE_BREATH_W;
                     fc_effect.Now_state = IS_light_scene;
+
+                    // ls_set_color(0, PURE_WHITE);
+                    // ls_set_color(1, BLACK);
+                    // fc_effect.dream_scene.change_type = MODE_SINGLE_C_BREATH;
+                    // fc_effect.dream_scene.c_n = 2;
+                    // fc_effect.Now_state = IS_light_scene;
                     break;
                 case 0x21:
-                    printf("\n 0x21");
                     fc_effect.w = 0;
                     ls_set_color(0, BLUE);
                     ls_set_color(1, GREEN);
@@ -706,25 +725,49 @@ void parse_zd_data(unsigned char *LedCommand)
                     fc_effect.Now_state = IS_light_scene;
                     break;
 
-                case 0x22: // 蓝白呼吸
-                    fc_set_style_custom();
-                    fc_effect.custom_index = 1;
-                    WS2812FX_stop();
+                case 0x22:
+                    // 蓝白呼吸
+                    // fc_set_style_custom();
+                    // fc_effect.custom_index = 1;
+                    // WS2812FX_stop();
+
+                    ls_set_color(0, PURE_WHITE | BLUE);
+                    ls_set_color(1, BLACK);
+                    fc_effect.dream_scene.change_type = MODE_SINGLE_C_BREATH;
+                    fc_effect.dream_scene.c_n = 2;
+                    fc_effect.Now_state = IS_light_scene;
 
                     break;
-                case 0x23: // 蓝白渐变
-                    fc_set_style_custom();
-                    fc_effect.custom_index = 2;
-                    WS2812FX_stop();
+                case 0x23:
+                    // 蓝白渐变
+                    // fc_set_style_custom();
+                    // fc_effect.custom_index = 2;
+                    // WS2812FX_stop();
+
+                    ls_set_color(0, BLUE);
+                    ls_set_color(1, PURE_WHITE);
+                    fc_effect.dream_scene.change_type = MODE_MUTIL_C_GRADUAL;
+                    fc_effect.dream_scene.c_n = 2;
+                    fc_effect.Now_state = IS_light_scene;
+
                     break;
-                case 0x24: // 蓝色呼吸，白色呼吸，蓝白呼吸
-                    fc_set_style_custom();
-                    fc_effect.custom_index = 3;
-                    WS2812FX_stop();
+                case 0x24:
+                    // 蓝色呼吸，白色呼吸，蓝白呼吸
+                    // fc_set_style_custom();
+                    // fc_effect.custom_index = 3;
+                    // WS2812FX_stop();
+
+                    ls_set_color(0, BLUE);
+                    ls_set_color(1, PURE_WHITE);
+                    ls_set_color(2, BLUE | PURE_WHITE);
+
+                    fc_effect.dream_scene.c_n = 3;
+                    fc_effect.dream_scene.change_type = MODE_MUTIL_C_BREATH;
+                    fc_effect.Now_state = IS_light_scene;
                     break;
                 }
                 set_fc_effect();
-                save_user_data_area3();
+                os_taskq_post("msg_task", 1, MSG_USER_SAVE_INFO);
             }
             //---------------------------------静态任务处理-----------------------------------
             if (LedCommand[0] == 0x04 && LedCommand[1] == 0x02 && LedCommand[2] >= 0 && LedCommand[2] < 0x07)
@@ -732,25 +775,32 @@ void parse_zd_data(unsigned char *LedCommand)
                 switch (LedCommand[2])
                 {
                 case 0:
-                    fc_static_effect(0); // R
+                    // fc_static_effect(0); // R
+                    colorful_light_set_static_color(RED);
                     break;
                 case 1:
-                    fc_static_effect(2); // B
+                    // fc_static_effect(2); // B
+                    colorful_light_set_static_color(BLUE);
                     break;
                 case 2:
-                    fc_static_effect(1); // G
+                    // fc_static_effect(1); // G
+                    colorful_light_set_static_color(GREEN);
                     break;
                 case 3:
-                    fc_static_effect(5); // CYAN
+                    // fc_static_effect(5); // CYAN
+                    colorful_light_set_static_color(CYAN);
                     break;
                 case 4:
-                    fc_static_effect(4); // YELLOW
+                    // fc_static_effect(4); // YELLOW
+                    colorful_light_set_static_color(YELLOW);
                     break;
                 case 5:
-                    fc_static_effect(9); // PURPLE
+                    // fc_static_effect(9); // PURPLE
+                    colorful_light_set_static_color(PURPLE);
                     break;
                 case 6:
-                    fc_static_effect(3); // w
+                    // fc_static_effect(3); // w
+                    colorful_light_set_static_color(PURE_WHITE);
                     break;
                 }
             }
@@ -772,15 +822,14 @@ void parse_zd_data(unsigned char *LedCommand)
                     fc_effect.w = 0; // 必须要配置，不配置，无法调节RBG效果
 
                 set_static_mode(LedCommand[3], LedCommand[4], LedCommand[5]); // 配好颜色，在service中会调回PWM驱动修改颜色
-
-                save_user_data_area3();
+                os_taskq_post("msg_task", 1, MSG_USER_SAVE_INFO);
             }
             //---------------------------------调节亮度-----------------------------------
             if (LedCommand[0] == 0x04 && LedCommand[1] == 0x03)
             {
                 extern void set_bright(u8 b);
                 set_bright(LedCommand[2]);
-                save_user_data_area3();
+                os_taskq_post("msg_task", 1, MSG_USER_SAVE_INFO);
                 Send_buffer[6] = 0x04;
                 Send_buffer[7] = 0x03;
                 Send_buffer[8] = LedCommand[2];
@@ -798,7 +847,7 @@ void parse_zd_data(unsigned char *LedCommand)
             {
                 // 范围0-100
                 ls_set_speed(LedCommand[2]);
-                save_user_data_area3();
+                os_taskq_post("msg_task", 1, MSG_USER_SAVE_INFO);
                 Send_buffer[6] = 0x04;
                 Send_buffer[7] = 0x04;
                 Send_buffer[8] = LedCommand[2];
@@ -810,7 +859,8 @@ void parse_zd_data(unsigned char *LedCommand)
             {
                 extern void set_rgb_sequence(u8 s);
                 set_rgb_sequence(LedCommand[2]);
-                save_user_data_area3();
+
+                os_taskq_post("msg_task", 1, MSG_USER_SAVE_INFO);
                 Send_buffer[6] = 0x04;
                 Send_buffer[7] = 0x05;
                 Send_buffer[8] = LedCommand[2];
@@ -823,7 +873,8 @@ void parse_zd_data(unsigned char *LedCommand)
                 extern void set_w(u8 w);
                 printf("\n =%d", LedCommand[2] * 255 / 100);
                 set_w(LedCommand[2] * 255 / 100);
-                save_user_data_area3(); // 保存参数配置到flash、
+                // save_user_data_area3(); // 保存参数配置到flash、
+                os_taskq_post("msg_task", 1, MSG_USER_SAVE_INFO);
             }
             //---------------------------------声控-----------------------------------
             // if(LedCommand[0]==0x2F && LedCommand[1]==0x04 )
@@ -833,7 +884,8 @@ void parse_zd_data(unsigned char *LedCommand)
                 // set_local_mic_mode(LedCommand[2]);
                 extern void set_music_mode(u8 m);
                 set_music_mode(LedCommand[2]);
-                save_user_data_area3(); // 保存参数配置到flash、
+                // save_user_data_area3(); // 保存参数配置到flash、
+                os_taskq_post("msg_task", 1, MSG_USER_SAVE_INFO);
                 Send_buffer[6] = 0x06;
                 Send_buffer[7] = 0x06;
                 Send_buffer[8] = LedCommand[2];
@@ -866,7 +918,7 @@ void parse_zd_data(unsigned char *LedCommand)
             {
                 extern void set_music_type(u8 ty);
                 set_music_type(LedCommand[2]);
-                save_user_data_area3(); // 保存参数配置到flash、
+                os_taskq_post("msg_task", 1, MSG_USER_SAVE_INFO);
                 Send_buffer[6] = 0x06;
                 Send_buffer[7] = 0x07;
                 Send_buffer[8] = LedCommand[2];
@@ -879,8 +931,9 @@ void parse_zd_data(unsigned char *LedCommand)
                 extern void one_wire_set_period(u8 p);
                 one_wire_set_period(LedCommand[2]);
                 os_time_dly(1);
-                enable_one_wire();
-                save_user_data_area3(); // 保存参数配置到flash、
+                // enable_one_wire();
+                os_taskq_post("msg_task", 1, MSG_SEQUENCER_ONE_WIRE_SEND_INFO);
+                os_taskq_post("msg_task", 1, MSG_USER_SAVE_INFO);
                 Send_buffer[6] = 0x2F;
                 Send_buffer[7] = 0x07;
                 Send_buffer[8] = LedCommand[2];
@@ -893,34 +946,32 @@ void parse_zd_data(unsigned char *LedCommand)
 
                 if (fc_effect.base_ins.motor_on_off == 0) // 开电机
                 {
-                    extern void one_wire_set_mode(u8 m);
-                    // extern void enable_one_wire(void);
-                    one_wire_set_mode(4); // 配置模式 360转
-                    os_time_dly(1);
-                    enable_one_wire();      // 使用发送数据
-                    save_user_data_area3(); // 保存参数配置到flash、
+                    // one_wire_set_mode(4); // 配置模式 360转
+                    if (6 == fc_effect.base_ins.mode)
+                    {
+                        // 如果电机的模式是6（关闭），则改为4
+                        fc_effect.base_ins.mode = 4;
+                    }
+                    fc_effect.base_ins.motor_on_off = DEVICE_ON;
+                    os_taskq_post("msg_task", 1, MSG_SEQUENCER_ONE_WIRE_SEND_INFO);
+                    os_taskq_post("msg_task", 1, MSG_USER_SAVE_INFO);
                     Send_buffer[6] = 0x2F;
                     Send_buffer[7] = 0x08;
                     Send_buffer[8] = 0x01;
                     // app_send_user_data(ATT_CHARACTERISTIC_fff1_01_VALUE_HANDLE, Send_buffer,9, ATT_OP_AUTO_READ_CCC);
                     ble_comm_att_send_data(fd_handle, ATT_CHARACTERISTIC_fff1_01_VALUE_HANDLE, Send_buffer, 9, ATT_OP_AUTO_READ_CCC);
-
-                    fc_effect.base_ins.motor_on_off = 1;
                 }
                 else
                 {
-                    extern void one_wire_set_mode(u8 m);
-                    // extern void enable_one_wire(void);
                     one_wire_set_mode(6); // 配置模式 停止
-                    os_time_dly(1);
-                    enable_one_wire();      // 使用发送数据
-                    save_user_data_area3(); // 保存参数配置到flash、
+                    fc_effect.base_ins.motor_on_off = DEVICE_OFF;
+                    os_taskq_post("msg_task", 1, MSG_SEQUENCER_ONE_WIRE_SEND_INFO);
+                    os_taskq_post("msg_task", 1, MSG_USER_SAVE_INFO);
                     Send_buffer[6] = 0x2F;
                     Send_buffer[7] = 0x08;
                     Send_buffer[8] = 0x00;
                     // app_send_user_data(ATT_CHARACTERISTIC_fff1_01_VALUE_HANDLE, Send_buffer,9, ATT_OP_AUTO_READ_CCC);
                     ble_comm_att_send_data(fd_handle, ATT_CHARACTERISTIC_fff1_01_VALUE_HANDLE, Send_buffer, 9, ATT_OP_AUTO_READ_CCC);
-                    fc_effect.base_ins.motor_on_off = 0;
                 }
             }
         }
@@ -951,7 +1002,7 @@ void parse_led_strip_data(u8 *pBuf, u8 len)
     /* 中道孔明灯协议解析 */
     /* 为兼容全彩的协议 */
 
-    save_user_data_area3();
+    os_taskq_post("msg_task", 1, MSG_USER_SAVE_INFO);
 }
 
 void tuya_fb_sw_state(void)
