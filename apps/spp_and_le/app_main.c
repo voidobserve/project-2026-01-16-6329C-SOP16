@@ -422,11 +422,11 @@ void main_while(viod)
         rf24g_long_timer();
 
         // USER_TO_DO 还不确定要不要慢慢点亮
-        // power_on_effect(); // 开机慢慢亮
+        power_on_effect(); // 开机慢慢亮
         // special_w_close(); // w灯关机慢慢开，关灯比较特殊
-        // bw_breath_effect();
-        // bw_gradual_effect();
-        // bw_effect3();
+        // bw_breath_effect();// 蓝白呼吸效果
+        // bw_gradual_effect(); // 蓝白渐变效果
+        // bw_effect3(); // 蓝色呼吸 -> 白色呼吸 -> 蓝白呼吸 -> 蓝色呼吸 -> ...
 
         uart_key_handle();
 

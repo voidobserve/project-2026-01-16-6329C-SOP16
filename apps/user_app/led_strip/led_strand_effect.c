@@ -434,21 +434,22 @@ extern u8 temp_w_bright;
 void soft_rurn_off_lights(void) // 软关灯处理
 {
     fc_effect.on_off_flag = DEVICE_OFF;
-    WS2812FX_stop();
+    // WS2812FX_stop();
 
-    // pwr_on_effect_f = 0;
-    // pwr_on_effect_f1 = 0;
-    // jianbian_start = 0;
+    // 缓慢关机的效果：
+    pwr_on_effect_f = 0;
+    pwr_on_effect_f1 = 0;
+    jianbian_start = 0;
     // if (fc_effect.w == 0)
     // {
-    //     WS2812FX_setSegment_colorOptions(
-    //         0,                        // 第0段
-    //         0, fc_effect.led_num - 1, // 起始位置，结束位置
-    //         &power_off_effect,        // 效果
-    //         0,                        // 颜色，WS2812FX_setColors设置
-    //         100,                      // 速度
-    //         FADE_XXSLOW);             // 选项，这里像素点大小：1
-    //     WS2812FX_start();
+        WS2812FX_setSegment_colorOptions(
+            0,                        // 第0段
+            0, fc_effect.led_num - 1, // 起始位置，结束位置
+            &power_off_effect,        // 效果
+            0,                        // 颜色，WS2812FX_setColors设置
+            100,                      // 速度
+            FADE_XXSLOW);             // 选项，这里像素点大小：1
+        WS2812FX_start();
     // }
 
     fb_led_on_off_state();
@@ -497,10 +498,12 @@ void special_w_close(void)
 /**************************************************软件开机*****************************************************/
 void soft_turn_on_the_light(void) // 软开灯处理
 {
-    // pwr_on_effect_f = 1;
-    // pwr_on_effect_f1 = 1;
-    // bb = 1;
-    // WS2812FX_setBrightness(1);
+    // 缓慢开机效果，要进行处理的步骤：
+    pwr_on_effect_f = 1;
+    pwr_on_effect_f1 = 1;
+    bb = 1;
+    WS2812FX_setBrightness(1);
+
     fc_effect.on_off_flag = DEVICE_ON;
     WS2812FX_start();
     set_fc_effect();

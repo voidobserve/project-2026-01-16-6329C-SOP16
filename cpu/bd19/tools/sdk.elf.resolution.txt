@@ -2480,6 +2480,7 @@ obj/Release/apps/spp_and_le/app_main.o
 -r=obj/Release/apps/spp_and_le/app_main.o,main_while,pl
 -r=obj/Release/apps/spp_and_le/app_main.o,rf24_key_handle,l
 -r=obj/Release/apps/spp_and_le/app_main.o,rf24g_long_timer,l
+-r=obj/Release/apps/spp_and_le/app_main.o,power_on_effect,l
 -r=obj/Release/apps/spp_and_le/app_main.o,uart_key_handle,l
 -r=obj/Release/apps/spp_and_le/app_main.o,save_user_data_time_count_down,l
 -r=obj/Release/apps/spp_and_le/app_main.o,save_user_data_handle,l
