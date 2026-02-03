@@ -127,6 +127,7 @@
 					<Add directory="../../../user_app/one_wire" />
 					<Add directory="../../../user_app/rf24g" />
 					<Add directory="D:/A_WorkSt/Aworkst/2026-01-16-森木/code/project-2026-01-16-6329C-SOP16/apps/user_app/ir_key" />
+					<Add directory="../../../user_app/ir_key" />
 				</Compiler>
 				<Linker>
 					<Add option="-flto" />

@@ -53,7 +53,7 @@ typedef enum
     MODE_SINGLE_METEOR = 23,       // 流星效果
     MODE_SINGLE_C_BREATH = 24,     // 单色呼吸
     MODE_GRADUAL = 25,             // 标准渐变，彩虹颜色
-    MODE_BREATH_W = 26,            // W通道呼吸
+    // MODE_BREATH_W = 26,            // W通道呼吸
     MODE_MUTIL_C_BREATH,
 } change_type_e;
 
@@ -104,19 +104,22 @@ typedef struct
     Now_state_e Now_state;       // 当前运行模式
     smear_adjust_t smear_adjust; // 涂抹功能
     dream_scene_t dream_scene;   // 幻彩情景
-    countdown_t countdown;       // 倒计时
-    u8 w;                        // w通道灰度，RGB模式W必须为0，w模式RGB为0
-    u8 breath_mode;              // 呼吸模式，0：红色，1：绿，2：蓝，3：W，4：七彩呼吸
-    u8 music_mode;
-    music_t music; // 音乐
+    // countdown_t countdown;       // 倒计时
+    // u8 w;                        // w通道灰度，RGB模式W必须为0，w模式RGB为0
+    u8 breath_mode; // 呼吸模式，0：红色，1：绿，2：蓝，3：W，4：七彩呼吸
+    u8 music_mode;  // 声控模式的索引值
+    music_t music;  // 音乐
     u8 custom_index;
     base_ins_t base_ins; // 电机
+
+    u8 brightness_level; // 在用app调节RGB颜色时，需要使用它来显示灯光的亮度，实现限流的效果（值越大，限制得越多）
+    u8 brightness_percent; // 记录当前的亮度百分比
 
 } fc_effect_t;
 
 #pragma pack()
 
-extern fc_effect_t fc_effect;
+extern volatile fc_effect_t fc_effect;
 
 void effect_smear_adjust_updata(smear_tool_e tool, hsv_t *colour, unsigned short *led_place);
 
@@ -134,10 +137,12 @@ void colorful_light_set_static_color(u32 color);
 
 void change_breath_mode(void);
 
+void set_brightness_by_percent(u8 percent);
 
+void fb_led_on_off_state(void); // 向app反馈灯开关状态
 void fb_led_bright_state(void);
 void fb_led_speed_state(void);
-void fb_motor_state(u8 state);
+void fb_motor_state(u8 state); // 向app反馈电机状态
 void fb_motor_period(void);
 
 #endif

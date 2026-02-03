@@ -356,7 +356,7 @@ extern void rf24_key_handle(void);
 extern void uart_key_handle(void);
 extern void power_on_effect(void);
 // extern void test_uart_a(void);
-extern void special_w_close(void);
+// extern void special_w_close(void);
 
 /*
     处理用户消息的线程 user_msg_handle_task
@@ -416,13 +416,15 @@ void user_msg_handle_task(void *p)
 // 10ms调用一次
 void main_while(viod)
 {
+    full_color_init();
+
     while (1)
     {
         rf24_key_handle();
         rf24g_long_timer();
 
-        // USER_TO_DO 还不确定要不要慢慢点亮
-        power_on_effect(); // 开机慢慢亮
+        // USER_TO_DO 待删除
+        // power_on_effect(); // 开机慢慢亮
         // special_w_close(); // w灯关机慢慢开，关灯比较特殊
         // bw_breath_effect();// 蓝白呼吸效果
         // bw_gradual_effect(); // 蓝白渐变效果
@@ -459,8 +461,7 @@ void my_main(void)
     mic_adc_init();    // 声控信号检测引脚初始化
     mcu_com_init();    // 电机GPIO初始化
 
-    ct_uart_init_a(9600);
-    full_color_init();
+    ct_uart_init_a(9600); 
 
     sys_s_hi_timer_add(NULL, WS2812_circle_task, 10);
     task_create(user_msg_handle_task, NULL, "msg_task");

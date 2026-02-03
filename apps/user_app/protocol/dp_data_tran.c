@@ -139,10 +139,10 @@ unsigned short dp_extract_data_handle(unsigned char *buff)
         printf("\r\n");
 
         // 效果参数
-        fc_effect.countdown.time = dp_countdown.time;
+        // fc_effect.countdown.time = dp_countdown.time;
 
-        printf("fc_effect.countdown.time = %d\r\n", fc_effect.countdown.time);
-        printf("\r\n");
+        // printf("fc_effect.countdown.time = %d\r\n", fc_effect.countdown.time);
+        // printf("\r\n");
 
         break;
 
@@ -290,7 +290,7 @@ void yuyin_effect3(void)
 
 void yuyin_music_effect(void)
 {
-    fc_effect.Now_state = IS_light_music; 
+    fc_effect.Now_state = IS_light_music;
     fc_effect.music.m++;
     fc_effect.music.m %= 4;
     set_fc_effect();
@@ -457,7 +457,7 @@ void parse_zd_data(unsigned char *LedCommand)
         //---------------------------------接收到开灯命令-----------------------------------
         if (LedCommand[0] == 0x01 && LedCommand[1] == 0x01)
         {
-            printf("\n switch ins");
+            // printf("\n switch ins");
             extern void set_on_off_led(u8 on_off);
             set_on_off_led(LedCommand[2]);
         }
@@ -672,7 +672,7 @@ void parse_zd_data(unsigned char *LedCommand)
 
                     break;
                 case 0x1C:
-                    ls_set_color(0, WHITE);
+                    ls_set_color(0, 0x0f0f0f); // 这里不使用白色
                     fc_effect.dream_scene.change_type = MODE_STROBE;
                     fc_effect.dream_scene.c_n = 1;
                     fc_effect.Now_state = IS_light_scene;
@@ -702,17 +702,17 @@ void parse_zd_data(unsigned char *LedCommand)
                     fc_effect.Now_state = IS_light_scene;
                     break;
                 case 0x20:
-                    fc_effect.dream_scene.change_type = MODE_BREATH_W;
-                    fc_effect.Now_state = IS_light_scene;
-
-                    // ls_set_color(0, PURE_WHITE);
-                    // ls_set_color(1, BLACK);
-                    // fc_effect.dream_scene.change_type = MODE_SINGLE_C_BREATH;
-                    // fc_effect.dream_scene.c_n = 2;
+                    // fc_effect.dream_scene.change_type = MODE_BREATH_W;
                     // fc_effect.Now_state = IS_light_scene;
+
+                    ls_set_color(0, PURE_WHITE);
+                    ls_set_color(1, BLACK);
+                    fc_effect.dream_scene.change_type = MODE_SINGLE_C_BREATH;
+                    fc_effect.dream_scene.c_n = 2;
+                    fc_effect.Now_state = IS_light_scene;
                     break;
                 case 0x21:
-                    fc_effect.w = 0;
+                    // fc_effect.w = 0;
                     ls_set_color(0, BLUE);
                     ls_set_color(1, GREEN);
                     ls_set_color(2, RED);
@@ -796,7 +796,7 @@ void parse_zd_data(unsigned char *LedCommand)
                     break;
                 case 5:
                     // fc_static_effect(9); // PURPLE
-                    colorful_light_set_static_color(PURPLE);
+                    colorful_light_set_static_color(MAGENTA);
                     break;
                 case 6:
                     // fc_static_effect(3); // w
@@ -807,28 +807,74 @@ void parse_zd_data(unsigned char *LedCommand)
             //---------------------------------更新RGB-----------------------------------
             if (LedCommand[0] == 0x04 && LedCommand[1] == 0x01 && LedCommand[2] == 0x1e)
             {
-                // extern void set_static_mode(u8 r, u8 g, u8 b);
-                // set_static_mode(LedCommand[3], LedCommand[4], LedCommand[5]);
-                // save_user_data_area3();
+                fc_effect.brightness_level = 0;
 
-                extern void set_static_mode(u8 r, u8 g, u8 b);
-                // 实现白光时，使用W控制，只有单色白光
-                if (LedCommand[3] == 0xFF && LedCommand[4] == 0xFF && LedCommand[5] == 0xFF)
+                if (LedCommand[3] == 0xFF && LedCommand[4] == 0x00 && LedCommand[5] == 0x00)
                 {
-                    fc_effect.w = 255;
-                    fc_effect.b = 100;
+
+                    // 红
+                    LedCommand[3] = 0xFF;
+                    LedCommand[4] = 0x00;
+                    LedCommand[5] = 0x00;
+                }
+                else if (LedCommand[3] == 0x00 && LedCommand[4] == 0xFF && LedCommand[5] == 0x00)
+                {
+                    // 绿
+                    LedCommand[3] = 0x00;
+                    LedCommand[4] = 0xD2;
+                    LedCommand[5] = 0x00;
+                }
+                else if (LedCommand[3] == 0x00 && LedCommand[4] == 0x00 && LedCommand[5] == 0xFF)
+                {
+                    // 蓝
+                    LedCommand[3] = 0x00;
+                    LedCommand[4] = 0x00;
+                    LedCommand[5] = 0xD2;
+                }
+                else if (LedCommand[3] == 0xFF && LedCommand[4] == 0xFF && LedCommand[5] == 0x00)
+                {
+                    // 黄
+                    LedCommand[3] = 0x78;
+                    LedCommand[4] = 0x78;
+                    LedCommand[5] = 0x00;
+                }
+                else if (LedCommand[3] == 0x00 && LedCommand[4] == 0xFF && LedCommand[5] == 0xFF)
+                {
+                    // 青
+                    LedCommand[3] = 0x00;
+                    LedCommand[4] = 0x6E;
+                    LedCommand[5] = 0x6E;
+                }
+                else if (LedCommand[3] == 0xFF && LedCommand[4] == 0x00 && LedCommand[5] == 0xFF)
+                {
+                    // 紫
+                    LedCommand[3] = 0x78;
+                    LedCommand[4] = 0x00;
+                    LedCommand[5] = 0x78;
+                }
+                else if (LedCommand[3] >= 0xA0 && LedCommand[4] >= 0xA0 && LedCommand[5] >= 0xA0)
+                {
+
+                    fc_effect.brightness_level = 2;
                 }
                 else
-                    fc_effect.w = 0; // 必须要配置，不配置，无法调节RBG效果
+                {
 
+                    fc_effect.brightness_level = 1;
+                }
+
+                set_brightness_by_percent(fc_effect.brightness_percent);
+
+                extern void set_static_mode(u8 r, u8 g, u8 b);
                 set_static_mode(LedCommand[3], LedCommand[4], LedCommand[5]); // 配好颜色，在service中会调回PWM驱动修改颜色
                 os_taskq_post("msg_task", 1, MSG_USER_SAVE_INFO);
             }
             //---------------------------------调节亮度-----------------------------------
             if (LedCommand[0] == 0x04 && LedCommand[1] == 0x03)
             {
-                extern void set_bright(u8 b);
-                set_bright(LedCommand[2]);
+                // extern void set_bright(u8 b);
+                // set_bright(LedCommand[2]);
+                set_brightness_by_percent(LedCommand[2]);
                 os_taskq_post("msg_task", 1, MSG_USER_SAVE_INFO);
                 Send_buffer[6] = 0x04;
                 Send_buffer[7] = 0x03;
@@ -870,9 +916,10 @@ void parse_zd_data(unsigned char *LedCommand)
             //---------------------------------W（灰度调节）控制----------------------------
             if (LedCommand[0] == 0x04 && LedCommand[1] == 0x06)
             {
-                extern void set_w(u8 w);
-                printf("\n =%d", LedCommand[2] * 255 / 100);
-                set_w(LedCommand[2] * 255 / 100);
+                // extern void set_w(u8 w);
+                // printf("\n =%d", LedCommand[2] * 255 / 100);
+                // set_w(LedCommand[2] * 255 / 100);
+                colorful_light_set_static_color(((u32)LedCommand[2] * 90 / 100) << 24);
                 // save_user_data_area3(); // 保存参数配置到flash、
                 os_taskq_post("msg_task", 1, MSG_USER_SAVE_INFO);
             }
@@ -910,7 +957,8 @@ void parse_zd_data(unsigned char *LedCommand)
             if (LedCommand[0] == 0x06 && LedCommand[1] == 0x04)
             {
                 extern void set_static_mode(u8 r, u8 g, u8 b);
-                set_bright(LedCommand[5]);
+                // set_bright(LedCommand[5]);
+                set_brightness_by_percent(LedCommand[5]);
                 set_static_mode(LedCommand[2], LedCommand[3], LedCommand[4]);
             }
             //---------------------------------设备手机麦或者外麦-----------------------------------

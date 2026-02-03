@@ -37,7 +37,7 @@ void ls_set_colors(uint8_t n, color_t *c);
 void soft_rurn_off_lights(void);   // 软关灯处理
 void soft_turn_on_the_light(void); // 软开灯处理
 
-fc_effect_t fc_effect; // 幻彩灯串效果数据
+volatile fc_effect_t fc_effect; // 幻彩灯串效果数据
 static u8 custom_index;
 // 和通信协议对应
 u8 rgb_sequence_map[6] =
@@ -66,7 +66,9 @@ void fc_data_init(void)
     fc_effect.b = 255;
     fc_effect.speed = 80;
     fc_effect.music.m = 1;
-    fc_effect.music.s = 80; // 灵敏度
+    fc_effect.music.s = 80;             // 灵敏度
+    fc_effect.brightness_percent = 100; // 亮度百分比
+
     // 电机
     fc_effect.base_ins.period_index = 0;
     // fc_effect.base_ins.period = 8;       // 速度8s
@@ -74,6 +76,21 @@ void fc_data_init(void)
     fc_effect.base_ins.mode = 4;                                               // 360转
     fc_effect.base_ins.dir = 0;                                                // 0: 正转  1：
     fc_effect.base_ins.motor_on_off = 1;                                       // 电机开
+}
+
+void soft_rurn_off_lights(void) // 软关灯处理
+{
+    fc_effect.on_off_flag = DEVICE_OFF;
+    WS2812FX_stop();       // 设置对应的标志位，并且关灯
+    fb_led_on_off_state(); // 向app反馈灯开关状态
+
+    close_fan();          // 关风扇
+    one_wire_set_mode(6); // 关闭电机（这个不设置电机的开关标志，下一次上电要根据这个来恢复）
+    os_taskq_post("msg_task", 1, MSG_SEQUENCER_ONE_WIRE_SEND_INFO);
+    fb_motor_state(0); // 向app反馈，表示电机已经关闭
+
+    os_taskq_post("msg_task", 1, MSG_USER_SAVE_INFO);
+    printf("soft_rurn_off_light!!\n");
 }
 
 u16 bw_speed = 0;
@@ -287,9 +304,7 @@ void bw_effect3(void)
 
 void full_color_init(void)
 {
-    extern void read_flash_device_status_init(void);
 
-    extern uint16_t WS2812FX_mode_static(void);
     read_flash_device_status_init();
     WS2812FX_init(1, fc_effect.sequence);
     WS2812FX_stop();
@@ -314,7 +329,7 @@ void fc_debug(void)
     printf_buf(&fc_effect.rgb, 3);
     printf("\n c_n=%d", fc_effect.dream_scene.c_n);
     printf("\n fc_effect.b = %d", fc_effect.b);
-    printf("\n fc_effect.w =%d", fc_effect.w);
+    // printf("\n fc_effect.w =%d", fc_effect.w);
     printf("\n fc_effect.on_off_flag=%d", fc_effect.on_off_flag);
     printf("\n fc_effect.music_mode =%d", fc_effect.music_mode);
 }
@@ -332,7 +347,7 @@ void set_power_off(void)
 void custom_effect(void)
 {
     extern uint16_t WS2812FX_adj_rgb_sequence(void);
-    fc_effect.w = 0;
+    // fc_effect.w = 0;
     if (custom_index == 0) // 开机效果
     {
         // WS2812FX_stop();
@@ -385,7 +400,22 @@ void fb_led_bright_state(void)
     uint8_t Send_buffer[6];
     Send_buffer[0] = 0x04;
     Send_buffer[1] = 0x03;
-    Send_buffer[2] = fc_effect.b * 100 / 255; //
+
+    if (fc_effect.brightness_level == 1)
+    {
+        Send_buffer[2] = (u32)fc_effect.b * 100 / 100; //
+    }
+    else if (fc_effect.brightness_level == 2)
+    {
+        Send_buffer[2] = (u32)fc_effect.b * 100 / 80; //
+    }
+    else
+    {
+        Send_buffer[2] = (u32)fc_effect.b * 100 / 255; //
+    }
+
+    fc_effect.brightness_percent = Send_buffer[2];
+
     extern void zd_fb_2_app(u8 * p, u8 len);
     zd_fb_2_app(Send_buffer, 3);
 }
@@ -400,6 +430,7 @@ void fb_led_speed_state(void)
     zd_fb_2_app(Send_buffer, 3);
 }
 
+// 向app反馈电机状态
 void fb_motor_state(u8 state)
 {
     uint8_t Send_buffer[6];
@@ -430,84 +461,57 @@ u8 pwr_on_effect_f = 0;  // 0:无需执行开机效果
 u8 pwr_on_effect_f1 = 0; // 0:无需执行开机效果
 static float bb = 1;
 extern u8 temp_w_bright;
-/************************************** **************软件关机*****************************************************/
-void soft_rurn_off_lights(void) // 软关灯处理
-{
-    fc_effect.on_off_flag = DEVICE_OFF;
-    // WS2812FX_stop();
 
-    // 缓慢关机的效果：
-    pwr_on_effect_f = 0;
-    pwr_on_effect_f1 = 0;
-    jianbian_start = 0;
-    // if (fc_effect.w == 0)
-    // {
-        WS2812FX_setSegment_colorOptions(
-            0,                        // 第0段
-            0, fc_effect.led_num - 1, // 起始位置，结束位置
-            &power_off_effect,        // 效果
-            0,                        // 颜色，WS2812FX_setColors设置
-            100,                      // 速度
-            FADE_XXSLOW);             // 选项，这里像素点大小：1
-        WS2812FX_start();
-    // }
+// USER_TO_DO 待删除
+// void special_w_close(void)
+// {
+//     static u8 u1_delay = 0;
+//     if (fc_effect.on_off_flag == DEVICE_OFF && fc_effect.w != 0)
+//     {
 
-    fb_led_on_off_state();
-    close_fan();          // 关风扇
-    one_wire_set_mode(6); // 关闭电机
-    os_taskq_post("msg_task", 1, MSG_SEQUENCER_ONE_WIRE_SEND_INFO);
-    fb_motor_state(0);
+//         if (temp_w_bright > 0)
+//         {
 
-    os_taskq_post("msg_task", 1, MSG_USER_SAVE_INFO);
-    printf("soft_rurn_off_light!!\n");
-}
+//             temp_w_bright--;
+//             mcpwm_set_duty(pwm_ch3, fc_effect.w * 10000 / 255 * temp_w_bright / 255);
+//         }
+//     }
+//     else if (fc_effect.on_off_flag == DEVICE_ON && fc_effect.w != 0)
+//     {
 
-void special_w_close(void)
-{
-    static u8 u1_delay = 0;
-    if (fc_effect.on_off_flag == DEVICE_OFF && fc_effect.w != 0)
-    {
+//         if (pwr_on_effect_f1)
+//         {
 
-        if (temp_w_bright > 0)
-        {
+//             if (temp_w_bright < fc_effect.b)
+//             {
+//                 temp_w_bright++;
+//                 mcpwm_set_duty(pwm_ch3, fc_effect.w * 10000 / 255 * temp_w_bright / 255);
+//             }
+//             else
+//             {
 
-            temp_w_bright--;
-            mcpwm_set_duty(pwm_ch3, fc_effect.w * 10000 / 255 * temp_w_bright / 255);
-        }
-    }
-    else if (fc_effect.on_off_flag == DEVICE_ON && fc_effect.w != 0)
-    {
-
-        if (pwr_on_effect_f1)
-        {
-
-            if (temp_w_bright < fc_effect.b)
-            {
-                temp_w_bright++;
-                mcpwm_set_duty(pwm_ch3, fc_effect.w * 10000 / 255 * temp_w_bright / 255);
-            }
-            else
-            {
-
-                pwr_on_effect_f1 = 0;
-            }
-        }
-    }
-}
+//                 pwr_on_effect_f1 = 0;
+//             }
+//         }
+//     }
+// }
 
 /**************************************************软件开机*****************************************************/
 void soft_turn_on_the_light(void) // 软开灯处理
 {
-    // 缓慢开机效果，要进行处理的步骤：
-    pwr_on_effect_f = 1;
-    pwr_on_effect_f1 = 1;
-    bb = 1;
-    WS2812FX_setBrightness(1);
+    // USER_TO_DO 待删除
+    // // 缓慢开机效果，要进行处理的步骤：
+    // pwr_on_effect_f = 1;
+    // pwr_on_effect_f1 = 1;
+    // bb = 1;
+    // WS2812FX_setBrightness(1);
 
     fc_effect.on_off_flag = DEVICE_ON;
     WS2812FX_start();
     set_fc_effect();
     open_fan(); // 开风扇
+
+    //
     if (DEVICE_ON == fc_effect.base_ins.motor_on_off)
     {
         // 如果在开机前，电机是开着的，则恢复电机在开机前的状态
@@ -518,8 +522,8 @@ void soft_turn_on_the_light(void) // 软开灯处理
         }
     }
     os_taskq_post("msg_task", 1, MSG_SEQUENCER_ONE_WIRE_SEND_INFO);
-    fb_motor_state(fc_effect.base_ins.motor_on_off);
-    fb_led_on_off_state();
+    fb_motor_state(fc_effect.base_ins.motor_on_off); // 向app反馈电机状态
+    fb_led_on_off_state();                           // 向app反馈灯开关状态
 
     os_taskq_post("msg_task", 1, MSG_USER_SAVE_INFO);
 
@@ -662,10 +666,24 @@ void colorful_light_set_static_color(u32 color)
 void set_static_mode(u8 r, u8 g, u8 b)
 {
     fc_effect.Now_state = IS_STATIC;
-    fc_effect.rgb.r = r;
-    fc_effect.rgb.g = g;
-    fc_effect.rgb.b = b;
-    fc_effect.w = 0;
+    if (r == 0xFF &&
+        g == 0xFF &&
+        b == 0xFF)
+    {
+        fc_effect.rgb.w = 0xFF;
+        fc_effect.rgb.r = 0;
+        fc_effect.rgb.g = 0;
+        fc_effect.rgb.b = 0;
+    }
+    else
+    {
+        fc_effect.rgb.r = r;
+        fc_effect.rgb.g = g;
+        fc_effect.rgb.b = b;
+        fc_effect.rgb.w = 0;
+    }
+
+    // fc_effect.w = 0;
     set_fc_effect();
 }
 
@@ -1232,22 +1250,28 @@ static void ls_scene_effect(void)
             &WS2812FX_mode_rainbow,      // 效果
             0,                           // 颜色，WS2812FX_setColors设置
             fc_effect.dream_scene.speed, // 速度
-            0);                          // 选项，这里像素点大小：3,反向/反向
-        WS2812FX_start();
-        break;
-    case MODE_BREATH_W:
-        printf("\n MODE_BREATH_W");
-        extern uint16_t breath_w(void);
+            SIZE_MEDIUM);                // 选项，这里像素点大小：3,反向/反向
+        // WS2812FX_start();
 
-        WS2812FX_setSegment_colorOptions(
-            0,                           // 第0段
-            0, fc_effect.led_num - 1,    // 起始位置，结束位置
-            &breath_w,                   // 效果
-            WHITE,                       // 颜色，WS2812FX_setColors设置
-            fc_effect.dream_scene.speed, // 速度
-            0);                          // 选项，这里像素点大小：3,反向/反向
+        // 照搬客户说的程序：
+        WS2812FX_set_coloQty(0, fc_effect.dream_scene.c_n);
+        ls_set_colors(fc_effect.dream_scene.c_n, &fc_effect.dream_scene.rgb);
         WS2812FX_start();
+
         break;
+    // case MODE_BREATH_W:
+    //     printf("\n MODE_BREATH_W");
+    //     extern uint16_t breath_w(void);
+
+    //     WS2812FX_setSegment_colorOptions(
+    //         0,                           // 第0段
+    //         0, fc_effect.led_num - 1,    // 起始位置，结束位置
+    //         &breath_w,                   // 效果
+    //         WHITE,                       // 颜色，WS2812FX_setColors设置
+    //         fc_effect.dream_scene.speed, // 速度
+    //         0);                          // 选项，这里像素点大小：3,反向/反向
+    //     WS2812FX_start();
+    //     break;
     case MODE_MUTIL_C_BREATH:
 
         extern uint16_t mutil_c_breath(void);
@@ -1351,138 +1375,321 @@ void speed_slow(void)
 
 // ------------------------------------------------亮度
 // 0-100
-void set_bright(u8 b)
+// USER_TO_DO 应该改成通过app设置的亮度 app_set_brightness()
+// void set_bright(u8 b)
+// {
+//     if (b == 0)
+//         b = 10;
+
+//     fc_effect.b = 255 * b / 100;
+
+//     if (fc_effect.brightness_level == 1)
+//     {
+//         WS2812FX_setBrightness((u32)b * 100 / 100);
+//     }
+//     else if (fc_effect.brightness_level == 2)
+//     {
+//         WS2812FX_setBrightness((u32)b * 80 / 100);
+//     }
+//     else
+//     {
+//         WS2812FX_setBrightness((u32)b * 255 / 100);
+//     }
+// }
+
+/**
+ * @brief 根据百分比来设置亮度
+ *
+ * @param percent 0 ~ 100
+ */
+void set_brightness_by_percent(u8 percent)
 {
-    if (b == 0)
-        b = 10;
-    fc_effect.b = 255 * b / 100;
+    if (percent < 10)
+        percent = 10;
+
+    // fc_effect.b = (u16)255 * percent / 100;
+
+    if (fc_effect.brightness_level == 1)
+    {
+        fc_effect.b = ((u32)percent * 100 / 100);
+    }
+    else if (fc_effect.brightness_level == 2)
+    {
+        fc_effect.b = ((u32)percent * 80 / 100);
+    }
+    else
+    {
+        fc_effect.b = ((u32)percent * 255 / 100);
+    }
 
     WS2812FX_setBrightness(fc_effect.b);
+    fc_effect.brightness_percent = percent;
+    fb_led_bright_state();
 }
 
-const u8 bright_jst[8] = {255, 180, 150, 120, 90, 70, 50, 25};
+const u8 bright_jst[8] = {255, 200, 170, 140, 110, 80, 50, 10};
+const u8 bright_jst1[8] = {100, 80, 70, 60, 50, 40, 30, 10};
+const u8 bright_jst2[8] = {80, 70, 60, 50, 40, 30, 20, 10};
+
 void bright_plus(void)
 {
+    if (fc_effect.brightness_level == 1)
+    {
+        if (fc_effect.b >= bright_jst1[1])
+        {
+            fc_effect.b = 255;
+            WS2812FX_setBrightness(fc_effect.b);
+        }
+        else if (fc_effect.b >= bright_jst1[2])
+        {
+            fc_effect.b = bright_jst1[1];
+            WS2812FX_setBrightness(fc_effect.b);
+        }
+        else if (fc_effect.b >= bright_jst1[3])
+        {
+            fc_effect.b = bright_jst1[2];
+            WS2812FX_setBrightness(fc_effect.b);
+        }
+        else if (fc_effect.b >= bright_jst1[4])
+        {
+            fc_effect.b = bright_jst1[3];
+            WS2812FX_setBrightness(fc_effect.b);
+        }
+        else if (fc_effect.b >= bright_jst1[5])
+        {
+            fc_effect.b = bright_jst1[4];
+            WS2812FX_setBrightness(fc_effect.b);
+        }
+        else if (fc_effect.b >= bright_jst1[6])
+        {
+            fc_effect.b = bright_jst1[5];
+            WS2812FX_setBrightness(fc_effect.b);
+        }
+        else if (fc_effect.b >= bright_jst1[7])
+        {
+            fc_effect.b = bright_jst1[6];
+            WS2812FX_setBrightness(fc_effect.b);
+        }
+    }
+    else if (fc_effect.brightness_level == 2)
+    {
+        if (fc_effect.b >= bright_jst2[1])
+        {
+            fc_effect.b = 100;
+            WS2812FX_setBrightness(fc_effect.b);
+        }
+        else if (fc_effect.b >= bright_jst2[2])
+        {
+            fc_effect.b = bright_jst2[1];
+            WS2812FX_setBrightness(fc_effect.b);
+        }
+        else if (fc_effect.b >= bright_jst2[3])
+        {
+            fc_effect.b = bright_jst2[2];
+            WS2812FX_setBrightness(fc_effect.b);
+        }
+        else if (fc_effect.b >= bright_jst2[4])
+        {
+            fc_effect.b = bright_jst2[3];
+            WS2812FX_setBrightness(fc_effect.b);
+        }
+        else if (fc_effect.b >= bright_jst2[5])
+        {
+            fc_effect.b = bright_jst2[4];
+            WS2812FX_setBrightness(fc_effect.b);
+        }
+        else if (fc_effect.b >= bright_jst2[6])
+        {
+            fc_effect.b = bright_jst2[5];
+            WS2812FX_setBrightness(fc_effect.b);
+        }
+        else if (fc_effect.b >= bright_jst2[7])
+        {
+            fc_effect.b = bright_jst2[6];
+            WS2812FX_setBrightness(fc_effect.b);
+        }
+    }
+    else
+    {
+        if (fc_effect.b >= bright_jst[1])
+        {
+            fc_effect.b = 255;
+            WS2812FX_setBrightness(fc_effect.b);
+        }
+        else if (fc_effect.b >= bright_jst[2])
+        {
+            fc_effect.b = bright_jst[1];
+            WS2812FX_setBrightness(fc_effect.b);
+        }
+        else if (fc_effect.b >= bright_jst[3])
+        {
+            fc_effect.b = bright_jst[2];
+            WS2812FX_setBrightness(fc_effect.b);
+        }
+        else if (fc_effect.b >= bright_jst[4])
+        {
+            fc_effect.b = bright_jst[3];
+            WS2812FX_setBrightness(fc_effect.b);
+        }
+        else if (fc_effect.b >= bright_jst[5])
+        {
+            fc_effect.b = bright_jst[4];
+            WS2812FX_setBrightness(fc_effect.b);
+        }
+        else if (fc_effect.b >= bright_jst[6])
+        {
+            fc_effect.b = bright_jst[5];
+            WS2812FX_setBrightness(fc_effect.b);
+        }
+        else if (fc_effect.b >= bright_jst[7])
+        {
+            fc_effect.b = bright_jst[6];
+            WS2812FX_setBrightness(fc_effect.b);
+        }
+    }
 
-    if (fc_effect.b >= bright_jst[1])
-    {
-        // if(fc_effect.rgb.r == 0 && fc_effect.rgb.g == 0 )
-        // {
-        //     custom_index = 4;
-        // }
-        // else{
-        //     custom_index = 3;
-        // }
-        fc_effect.b = 255;
-        WS2812FX_setBrightness(fc_effect.b);
-        os_taskq_post("msg_task", 1, MSG_USER_SAVE_INFO);
-        // fc_set_style_custom(); //自定义效果
-        // set_fc_effect();
-    }
-    else if (fc_effect.b >= bright_jst[2])
-    {
-        fc_effect.b = bright_jst[1];
-        WS2812FX_setBrightness(fc_effect.b);
-        os_taskq_post("msg_task", 1, MSG_USER_SAVE_INFO);
-    }
-    else if (fc_effect.b >= bright_jst[3])
-    {
-        fc_effect.b = bright_jst[2];
-        WS2812FX_setBrightness(fc_effect.b);
-        os_taskq_post("msg_task", 1, MSG_USER_SAVE_INFO);
-    }
-    else if (fc_effect.b >= bright_jst[4])
-    {
-        fc_effect.b = bright_jst[3];
-        WS2812FX_setBrightness(fc_effect.b);
-        os_taskq_post("msg_task", 1, MSG_USER_SAVE_INFO);
-    }
-    else if (fc_effect.b >= bright_jst[5])
-    {
-        fc_effect.b = bright_jst[4];
-        WS2812FX_setBrightness(fc_effect.b);
-        os_taskq_post("msg_task", 1, MSG_USER_SAVE_INFO);
-    }
-    else if (fc_effect.b >= bright_jst[6])
-    {
-        fc_effect.b = bright_jst[5];
-        WS2812FX_setBrightness(fc_effect.b);
-        os_taskq_post("msg_task", 1, MSG_USER_SAVE_INFO);
-    }
-    else if (fc_effect.b >= bright_jst[7])
-    {
-        fc_effect.b = bright_jst[6];
-        WS2812FX_setBrightness(fc_effect.b);
-        os_taskq_post("msg_task", 1, MSG_USER_SAVE_INFO);
-    }
+    os_taskq_post("msg_task", 1, MSG_USER_SAVE_INFO);
     fb_led_bright_state();
-
-    printf("\n fc_effect.b = %d", fc_effect.b);
 }
 
 void bright_sub(void)
 {
+    if (fc_effect.brightness_level == 1)
+    {
+        if (fc_effect.b <= bright_jst1[6])
+        {
+            fc_effect.b = bright_jst1[7];
+            WS2812FX_setBrightness(fc_effect.b);
+        }
+        else if (fc_effect.b <= bright_jst1[5])
+        {
+            fc_effect.b = bright_jst1[6];
+            WS2812FX_setBrightness(fc_effect.b);
+        }
+        else if (fc_effect.b <= bright_jst1[4])
+        {
+            fc_effect.b = bright_jst1[5];
+            WS2812FX_setBrightness(fc_effect.b);
+        }
+        else if (fc_effect.b <= bright_jst1[3])
+        {
+            fc_effect.b = bright_jst1[4];
+            WS2812FX_setBrightness(fc_effect.b);
+        }
+        else if (fc_effect.b <= bright_jst1[2])
+        {
+            fc_effect.b = bright_jst1[3];
+            WS2812FX_setBrightness(fc_effect.b);
+        }
+        else if (fc_effect.b <= bright_jst1[1])
+        {
+            fc_effect.b = bright_jst1[2];
+            WS2812FX_setBrightness(fc_effect.b);
+        }
+        else if (fc_effect.b <= bright_jst1[0])
+        {
+            fc_effect.b = bright_jst1[1];
+            WS2812FX_setBrightness(fc_effect.b);
+        }
+    }
+    else if (fc_effect.brightness_level == 2)
+    {
+        if (fc_effect.b <= bright_jst2[6])
+        {
+            fc_effect.b = bright_jst2[7];
+            WS2812FX_setBrightness(fc_effect.b);
+        }
+        else if (fc_effect.b <= bright_jst2[5])
+        {
+            fc_effect.b = bright_jst2[6];
+            WS2812FX_setBrightness(fc_effect.b);
+        }
+        else if (fc_effect.b <= bright_jst2[4])
+        {
+            fc_effect.b = bright_jst2[5];
+            WS2812FX_setBrightness(fc_effect.b);
+        }
+        else if (fc_effect.b <= bright_jst2[3])
+        {
+            fc_effect.b = bright_jst2[4];
+            WS2812FX_setBrightness(fc_effect.b);
+        }
+        else if (fc_effect.b <= bright_jst2[2])
+        {
+            fc_effect.b = bright_jst2[3];
+            WS2812FX_setBrightness(fc_effect.b);
+        }
+        else if (fc_effect.b <= bright_jst2[1])
+        {
+            fc_effect.b = bright_jst2[2];
+            WS2812FX_setBrightness(fc_effect.b);
+        }
+        else if (fc_effect.b <= bright_jst2[0])
+        {
+            fc_effect.b = bright_jst2[1];
+            WS2812FX_setBrightness(fc_effect.b);
+        }
+    }
+    else
+    {
+        if (fc_effect.b <= bright_jst[6])
+        {
+            fc_effect.b = bright_jst[7];
+            WS2812FX_setBrightness(fc_effect.b);
+        }
+        else if (fc_effect.b <= bright_jst[5])
+        {
+            fc_effect.b = bright_jst[6];
+            WS2812FX_setBrightness(fc_effect.b);
+        }
+        else if (fc_effect.b <= bright_jst[4])
+        {
+            fc_effect.b = bright_jst[5];
+            WS2812FX_setBrightness(fc_effect.b);
+        }
+        else if (fc_effect.b <= bright_jst[3])
+        {
+            fc_effect.b = bright_jst[4];
+            WS2812FX_setBrightness(fc_effect.b);
+        }
+        else if (fc_effect.b <= bright_jst[2])
+        {
+            fc_effect.b = bright_jst[3];
+            WS2812FX_setBrightness(fc_effect.b);
+        }
+        else if (fc_effect.b <= bright_jst[1])
+        {
+            fc_effect.b = bright_jst[2];
+            WS2812FX_setBrightness(fc_effect.b);
+        }
+        else if (fc_effect.b <= bright_jst[0])
+        {
+            fc_effect.b = bright_jst[1];
+            WS2812FX_setBrightness(fc_effect.b);
+        }
+    }
 
-    if (fc_effect.b <= bright_jst[6])
-    {
-        // custom_index = 4;
-        fc_effect.b = bright_jst[7];
-        WS2812FX_setBrightness(fc_effect.b);
-        os_taskq_post("msg_task", 1, MSG_USER_SAVE_INFO);
-        // fc_set_style_custom(); //自定义效果
-        // set_fc_effect();
-    }
-    else if (fc_effect.b <= bright_jst[5])
-    {
-        fc_effect.b = bright_jst[6];
-        WS2812FX_setBrightness(fc_effect.b);
-        os_taskq_post("msg_task", 1, MSG_USER_SAVE_INFO);
-    }
-    else if (fc_effect.b <= bright_jst[4])
-    {
-        fc_effect.b = bright_jst[5];
-        WS2812FX_setBrightness(fc_effect.b);
-        os_taskq_post("msg_task", 1, MSG_USER_SAVE_INFO);
-    }
-    else if (fc_effect.b <= bright_jst[3])
-    {
-        fc_effect.b = bright_jst[4];
-        WS2812FX_setBrightness(fc_effect.b);
-        os_taskq_post("msg_task", 1, MSG_USER_SAVE_INFO);
-    }
-    else if (fc_effect.b <= bright_jst[2])
-    {
-        fc_effect.b = bright_jst[3];
-        WS2812FX_setBrightness(fc_effect.b);
-        os_taskq_post("msg_task", 1, MSG_USER_SAVE_INFO);
-    }
-    else if (fc_effect.b <= bright_jst[1])
-    {
-        fc_effect.b = bright_jst[2];
-        WS2812FX_setBrightness(fc_effect.b);
-        os_taskq_post("msg_task", 1, MSG_USER_SAVE_INFO);
-    }
-    else if (fc_effect.b <= bright_jst[0])
-    {
-        fc_effect.b = bright_jst[1];
-        WS2812FX_setBrightness(fc_effect.b);
-        os_taskq_post("msg_task", 1, MSG_USER_SAVE_INFO);
-    }
+    os_taskq_post("msg_task", 1, MSG_USER_SAVE_INFO);
     fb_led_bright_state();
-    printf("\n fc_effect.b = %d", fc_effect.b);
 }
 
 void max_bright(void)
 {
-    fc_effect.b = bright_jst[0];
-    WS2812FX_setBrightness(fc_effect.b);
+    // fc_effect.b = bright_jst[0];
+    // WS2812FX_setBrightness(fc_effect.b);
+    // fb_led_bright_state();
+
+    set_brightness_by_percent(100);
     fb_led_bright_state();
 }
 
 void min_bright(void)
 {
-    fc_effect.b = bright_jst[7];
-    WS2812FX_setBrightness(fc_effect.b);
+    // fc_effect.b = bright_jst[7];
+    // WS2812FX_setBrightness(fc_effect.b);
+    // fb_led_bright_state();
+
+    set_brightness_by_percent(10);
     fb_led_bright_state();
 }
 
@@ -1542,15 +1749,15 @@ void ls_set_colors(uint8_t n, color_t *c)
 }
 
 // ------------------------------------------------W通道
-void set_w(u8 w)
-{
-    fc_effect.w = w;
-    fc_effect.Now_state = IS_STATIC;
-    fc_effect.rgb.r = 0;
-    fc_effect.rgb.g = 0;
-    fc_effect.rgb.b = 0;
-    set_fc_effect();
-}
+// void set_w(u8 w)
+// {
+//     // fc_effect.w = w;
+//     fc_effect.Now_state = IS_STATIC;
+//     fc_effect.rgb.r = 0;
+//     fc_effect.rgb.g = 0;
+//     fc_effect.rgb.b = 0;
+//     set_fc_effect();
+// }
 
 // 设置fc_effect.dream_scene.rgb的颜色池
 // n:0-MAX_NUM_COLORS
@@ -1728,7 +1935,7 @@ void set_fc_effect(void)
     switch (fc_effect.Now_state)
     {
     case IS_light_scene:
-        set_bright(100);
+        set_brightness_by_percent(100);
         ls_scene_effect();
         break;
         // ==========================================================
@@ -1767,14 +1974,15 @@ void set_fc_effect(void)
         // ==========================================================
     case IS_light_music:
         // fc_effect.w = 0;
-        set_bright(100);
+        // set_bright(100);
+        set_brightness_by_percent(100);
         /* code */
         fc_music();
         break;
         // ==========================================================
     case IS_smear_adjust:
         printf("\n IS_smear_adjust");
-        fc_smear_adjust();
+        // fc_smear_adjust();
         break;
         // ==========================================================
     case IS_STATIC:

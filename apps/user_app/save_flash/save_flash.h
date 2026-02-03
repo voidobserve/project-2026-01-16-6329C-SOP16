@@ -4,7 +4,7 @@
 #include "led_strand_effect.h"
  
 // 需要保存数据时，延时保存的时间：（单位：ms）
-#define DELAY_SAVE_FLASH_TIMES ((u16)3000)
+#define DELAY_SAVE_FLASH_TIMES ((u16)1000)
 
 #pragma pack(1)
 typedef struct

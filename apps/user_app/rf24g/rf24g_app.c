@@ -166,7 +166,7 @@ void rf24_key_handle(void)
             /*
                 静态模式下，增加 亮度
                 动态模式下，增加 速度
-                声控模式下，增加 灵敏度（USER_TO_DO 原本并没有调节灵敏度的功能，还不知道要不要加）
+                声控模式下，增加 灵敏度（原本并没有调节灵敏度的功能，目前不添加）
             */
 
             extern void bright_plus(void);
@@ -185,15 +185,16 @@ void rf24_key_handle(void)
             }
             else if (fc_effect.Now_state == IS_light_music)
             {
-
             }
+
+            os_taskq_post("msg_task", 1, MSG_USER_SAVE_INFO);
         }
         else if (key_value == RF24_K06)
         {
             /*
                 静态模式下，减小 亮度
                 动态模式下，减小 速度
-                声控模式下，减小 灵敏度（USER_TO_DO 原本并没有调节灵敏度的功能，还不知道要不要加）
+                声控模式下，减小 灵敏度（原本并没有调节灵敏度的功能，目前不添加）
             */
             extern void bright_sub(void);
             extern void speed_slow(void);
@@ -211,8 +212,9 @@ void rf24_key_handle(void)
             }
             else if (fc_effect.Now_state == IS_light_music)
             {
-
             }
+
+            os_taskq_post("msg_task", 1, MSG_USER_SAVE_INFO);
         }
         else if (key_value == RF24_K25) // 电机
         {
@@ -279,42 +281,51 @@ void rf24_key_handle(void)
             switch (key_value)
             {
             case RF24_K09:
+                fc_effect.brightness_level = 0; // 不限制亮度
                 colorful_light_set_static_color(RED);
                 break;
                 // ===============================================================
             case RF24_K10:
+                fc_effect.brightness_level = 0; // 不限制亮度
                 colorful_light_set_static_color(GREEN);
                 break;
                 // ===============================================================
             case RF24_K11:
+                fc_effect.brightness_level = 0; // 不限制亮度
                 colorful_light_set_static_color(BLUE);
                 break;
                 // ===============================================================
             case RF24_K12:
+                fc_effect.brightness_level = 0; // 不限制亮度
                 colorful_light_set_static_color(PURE_WHITE);
                 break;
                 // ===============================================================
             case RF24_K13:
+                fc_effect.brightness_level = 0; // 不限制亮度
                 colorful_light_set_static_color(ORANGE);
                 break;
                 // ===============================================================
             case RF24_K14:
+                fc_effect.brightness_level = 0; // 不限制亮度
                 colorful_light_set_static_color(YELLOW);
                 break;
                 // ===============================================================
             case RF24_K15:
+                fc_effect.brightness_level = 0; // 不限制亮度
                 colorful_light_set_static_color(CYAN);
                 break;
             // ===============================================================
             case RF24_K16:
-                colorful_light_set_static_color(PURPLE);
+                fc_effect.brightness_level = 0; // 不限制亮度
+                colorful_light_set_static_color(MAGENTA);
                 break;
                 // ===============================================================
             case RF24_K17:
                 // 三色跳变
-                ls_set_color(0, RED);
+                fc_effect.brightness_level = 0; // 不限制亮度
+                ls_set_color(0, BLUE);
                 ls_set_color(1, GREEN);
-                ls_set_color(2, BLUE);
+                ls_set_color(2, RED);
                 fc_effect.dream_scene.change_type = MODE_JUMP;
                 fc_effect.dream_scene.c_n = 3;
                 fc_effect.Now_state = IS_light_scene;
@@ -323,13 +334,14 @@ void rf24_key_handle(void)
                 // ===============================================================
             case RF24_K18:
                 // 七色跳变
-                ls_set_color(0, RED);
+                fc_effect.brightness_level = 0; // 不限制亮度
+                ls_set_color(0, BLUE);
                 ls_set_color(1, GREEN);
-                ls_set_color(2, BLUE);
-                ls_set_color(3, YELLOW);
-                ls_set_color(4, CYAN);
-                ls_set_color(5, MAGENTA);
-                ls_set_color(6, PURE_WHITE);
+                ls_set_color(2, RED);
+                ls_set_color(3, PURE_WHITE);
+                ls_set_color(4, YELLOW);
+                ls_set_color(5, CYAN);
+                ls_set_color(6, PURPLE);
                 fc_effect.dream_scene.change_type = MODE_JUMP;
                 fc_effect.dream_scene.c_n = 7;
                 fc_effect.Now_state = IS_light_scene;
@@ -338,36 +350,55 @@ void rf24_key_handle(void)
                 // ===============================================================
             case RF24_K19:
                 // 5种呼吸
+                fc_effect.brightness_level = 0; // 不限制亮度
                 extern void change_breath_mode(void);
                 change_breath_mode();
                 break;
                 // ===============================================================
             case RF24_K20:
                 // 七色渐变
+                // fc_effect.dream_scene.change_type = MODE_GRADUAL;
+                // fc_effect.Now_state = IS_light_scene;
+                fc_effect.brightness_level = 0; // 不限制亮度
+                // 照搬客户说的那一版程序：
+                ls_set_color(0, YELLOW);
+                ls_set_color(1, RED);
+                ls_set_color(2, GREEN);
+                ls_set_color(3, CYAN);
+                ls_set_color(4, BLUE);
+                ls_set_color(5, PURPLE);
+
                 fc_effect.dream_scene.change_type = MODE_GRADUAL;
+                fc_effect.dream_scene.c_n = 6;
                 fc_effect.Now_state = IS_light_scene;
+
                 set_fc_effect();
+                printf("r5c4\n");
                 break;
                 // ===============================================================
             case RF24_K21:
+                fc_effect.brightness_level = 0; // 不限制亮度
                 fc_effect.Now_state = IS_light_music;
                 fc_effect.music.m = 0;
                 set_fc_effect();
                 break;
                 // ===============================================================
             case RF24_K22:
+                fc_effect.brightness_level = 0; // 不限制亮度
                 fc_effect.Now_state = IS_light_music;
                 fc_effect.music.m = 1;
                 set_fc_effect();
                 break;
                 // ===============================================================
             case RF24_K23:
+                fc_effect.brightness_level = 0; // 不限制亮度
                 fc_effect.Now_state = IS_light_music;
                 fc_effect.music.m = 2;
                 set_fc_effect();
                 break;
                 // ===============================================================
             case RF24_K24:
+                fc_effect.brightness_level = 0; // 不限制亮度
                 fc_effect.Now_state = IS_light_music;
                 fc_effect.music.m = 3;
                 set_fc_effect();

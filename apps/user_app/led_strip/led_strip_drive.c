@@ -54,19 +54,29 @@ void led_gpio_init(void)
 /**************************  风扇IO口初始化   ***********/
 void fan_gpio_init(void)
 {
-    gpio_set_pull_down(FAN_CTL_PIN, 0);
-    gpio_set_pull_up(FAN_CTL_PIN, 0);
-    gpio_direction_output(FAN_CTL_PIN, 1);
+    // gpio_set_pull_down(FAN_CTL_PIN, 0); // 关闭下拉
+    // gpio_set_pull_up(FAN_CTL_PIN, 0); // 关闭上拉
+    // gpio_direction_output(FAN_CTL_PIN, 1); // 输出高电平
+
+
+    gpio_set_die(FAN_CTL_PIN, 1); // 输出模式
+    gpio_direction_output(FAN_CTL_PIN, 0); // 输出低电平
+    timer_pwm_init(JL_TIMER3, FAN_CTL_PIN, 100 , 0); 
+    set_timer_pwm_duty(JL_TIMER3, 5000); // 0 ~ 10000 -> 0 ~ 100%占空比
 }
 
 void open_fan(void)
 {
-    gpio_direction_output(FAN_CTL_PIN, 1);
+    // gpio_direction_output(FAN_CTL_PIN, 1);
+
+    set_timer_pwm_duty(JL_TIMER3, 5000);
 }
 
 void close_fan(void)
 {
-    gpio_direction_output(FAN_CTL_PIN, 0);
+    // gpio_direction_output(FAN_CTL_PIN, 0);
+
+    set_timer_pwm_duty(JL_TIMER3, 0);
 }
 
 void led_pwm_init(void)
@@ -77,7 +87,7 @@ void led_pwm_init(void)
     struct pwm_platform_data pwm_p_data;
     pwm_p_data.pwm_aligned_mode = pwm_edge_aligned; // 边沿对齐
     pwm_p_data.pwm_ch_num = pwm_ch0;                // 通道号
-    pwm_p_data.frequency = 1000;                    // 1KHz
+    pwm_p_data.frequency = 30000;                    // 频率，单位：Hz
     pwm_p_data.duty = 0;                            // 上电输出0%占空比
     pwm_p_data.h_pin = LED_R_PIN;                   // 任意引脚
     pwm_p_data.l_pin = -1;                          // 任意引脚,不需要就填-1
@@ -86,7 +96,7 @@ void led_pwm_init(void)
     // G
     pwm_p_data.pwm_aligned_mode = pwm_edge_aligned; // 边沿对齐
     pwm_p_data.pwm_ch_num = pwm_ch1;                // 通道号
-    pwm_p_data.frequency = 1000;                    // 1KHz
+    pwm_p_data.frequency = 30000;                    // 频率，单位：Hz
     pwm_p_data.duty = 0;                            // 上电输出0%占空比
     pwm_p_data.h_pin = LED_G_PIN;                   // 任意引脚
     pwm_p_data.l_pin = -1;                          // 任意引脚,不需要就填-1
@@ -95,7 +105,7 @@ void led_pwm_init(void)
     // B
     pwm_p_data.pwm_aligned_mode = pwm_edge_aligned; // 边沿对齐
     pwm_p_data.pwm_ch_num = pwm_ch2;                // 通道号
-    pwm_p_data.frequency = 1000;                    // 1KHz
+    pwm_p_data.frequency = 30000;                    // 频率，单位：Hz
     pwm_p_data.duty = 0;                            // 上电输出0%占空比
     pwm_p_data.h_pin = LED_B_PIN;                   // 任意引脚
     pwm_p_data.l_pin = -1;                          // 任意引脚,不需要就填-1
@@ -104,7 +114,7 @@ void led_pwm_init(void)
     // W
     pwm_p_data.pwm_aligned_mode = pwm_edge_aligned; // 边沿对齐
     pwm_p_data.pwm_ch_num = pwm_ch3;                // 通道号
-    pwm_p_data.frequency = 1000;                    // 1KHz
+    pwm_p_data.frequency = 1000;                    // 频率，单位：Hz
     pwm_p_data.duty = 0;                            // 上电输出0%占空比
     pwm_p_data.h_pin = LED_W_PIN;                   // 任意引脚
     pwm_p_data.l_pin = -1;                          // 任意引脚,不需要就填-1
@@ -114,6 +124,7 @@ void led_pwm_init(void)
 #endif
 }
 
+#if 0
 #include "led_strand_effect.h"
 extern u8 pwr_on_effect_f1;
 u8 temp_w_bright = 0;
@@ -149,6 +160,7 @@ void fc_driver(u8 r, u8 g, u8 b)
         }
     }
 }
+#endif
 
 void fc_rgbw_driver(u8 r, u8 g, u8 b, u8 w)
 {

@@ -2,6 +2,8 @@
 #include "ws2812_bsp.h"
 #include "debug.h"
 #include "my_effect.h"
+#include "led_strip_drive.h"
+
 static volatile unsigned long tick_ms;
 void ws281x_init()
 {

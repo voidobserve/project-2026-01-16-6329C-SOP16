@@ -605,7 +605,7 @@ uint16_t WS2812FX_mutil_strobe(void)
     return _seg->speed / 2;
 }
 
-extern u8 pwr_on_effect_f;
+// extern u8 pwr_on_effect_f;
 extern u8 jianbian_start;
 // 整条灯带渐变，支持多种颜色之间切换
 // 颜色池：fc_effect.dream_scene.rgb[]
@@ -760,31 +760,31 @@ uint16_t breath_rgb(void)
 }
 
 // w通道呼吸
-uint16_t breath_w(void)
-{
-    int lum = _seg_rt->counter_mode_step;
-    if (lum > 255)
-        lum = 511 - lum; // lum = 0 -> 255 -> 0
+// uint16_t breath_w(void)
+// {
+//     int lum = _seg_rt->counter_mode_step;
+//     if (lum > 255)
+//         lum = 511 - lum; // lum = 0 -> 255 -> 0
 
-    fc_effect.w = WS2812FX_color_blend(_seg->colors[1], _seg->colors[0], lum);
-    Adafruit_NeoPixel_fill(0, _seg->start, _seg_len);
-    _seg_rt->counter_mode_step += 1;
-    if (_seg_rt->counter_mode_step > 511)
-    {
-        _seg_rt->counter_mode_step = 0;
+//     fc_effect.w = WS2812FX_color_blend(_seg->colors[1], _seg->colors[0], lum);
+//     Adafruit_NeoPixel_fill(0, _seg->start, _seg_len);
+//     _seg_rt->counter_mode_step += 1;
+//     if (_seg_rt->counter_mode_step > 511)
+//     {
+//         _seg_rt->counter_mode_step = 0;
 
-        return 3000 + _seg->speed;
-    }
-    else if (_seg_rt->counter_mode_step == 255)
-    {
-        return _seg->speed;
-    }
+//         return 3000 + _seg->speed;
+//     }
+//     else if (_seg_rt->counter_mode_step == 255)
+//     {
+//         return _seg->speed;
+//     }
 
-    else
-    {
-        return 20;
-    }
-}
+//     else
+//     {
+//         return 20;
+//     }
+// }
 
 //-------------------------------------- 声控-----------------------------------------
 // ----------------------------------------------------------------------------全彩音乐效果
@@ -2079,9 +2079,7 @@ uint16_t WS2812FX_mode_rainbow_cycle(void)
 
 uint16_t WS2812FX_mode_rainbow(void)
 {
-    if (!jianbian_start)
-        return _seg->speed;
-
+#if 0
     uint32_t color = WS2812FX_color_wheel(_seg_rt->counter_mode_step);
     Adafruit_NeoPixel_fill(color, _seg->start, _seg_len); // 85一个色
 
@@ -2121,6 +2119,67 @@ uint16_t WS2812FX_mode_rainbow(void)
     else if (_seg->speed > 410 && _seg->speed <= 500)
     {
         return 120; // 10
+    }
+#endif
+
+// USER_TO_DO 待确认效果，如果效果差不多，直接删除
+    u32 rgb;
+    static u8 pp = 0;
+
+    int lum = _seg_rt->counter_mode_step;
+    if (lum > 255)
+        lum = 511 - lum; // lum = 0 -> 255 -> 0
+
+    // _seg->colors[1]:目标颜色
+    uint32_t color = WS2812FX_color_blend(_seg->colors[1], _seg->colors[0], lum);
+
+    Adafruit_NeoPixel_fill(color, _seg->start, _seg_len);
+
+    if (_seg_rt->counter_mode_step == 256)
+    {
+        pp = 2;
+        _seg_rt->aux_param++;
+        _seg_rt->aux_param %= fc_effect.dream_scene.c_n;
+
+        rgb = ((u32)fc_effect.dream_scene.rgb[_seg_rt->aux_param].r << 16) |
+              ((u32)fc_effect.dream_scene.rgb[_seg_rt->aux_param].g << 8) |
+              ((u32)fc_effect.dream_scene.rgb[_seg_rt->aux_param].b);
+
+        _seg->colors[0] = color;
+        _seg->colors[1] = rgb;
+    }
+
+    _seg_rt->counter_mode_step++;
+    if (_seg_rt->counter_mode_step > 511)
+    {
+        _seg_rt->counter_mode_step = 0;
+
+        SET_CYCLE;
+    }
+
+    if (_seg->speed <= 10)
+    {
+        return 15; // 4s  计算公式 4000 / 255
+    }
+    else if (_seg->speed > 10 && _seg->speed <= 110)
+    {
+        return 24; // 6
+    }
+    else if (_seg->speed > 110 && _seg->speed <= 210)
+    {
+        return 28; // 7
+    }
+    else if (_seg->speed > 210 && _seg->speed <= 310)
+    {
+        return 31; // 8
+    }
+    else if (_seg->speed > 310 && _seg->speed <= 410)
+    {
+        return 35; // 9
+    }
+    else if (_seg->speed > 410 && _seg->speed <= 500)
+    {
+        return 40; // 10
     }
 }
 

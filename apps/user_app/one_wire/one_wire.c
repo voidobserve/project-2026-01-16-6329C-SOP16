@@ -22,32 +22,6 @@ void mcu_com_init(void)
     gpio_direction_output(MOTOR_CTL_PIN, 1);
 }
 
-// USER_TO_DO 如果新版程序通过，待删除该程序
-// /**
-//  * @brief 打包基本数据  数据包
-//  *
-//  */
-// void pack_base(void)
-// {
-//     u8 p;
-//     send_base_ins = 0;
-//     send_base_ins |= fc_effect.base_ins.mode;
-
-//     for (p = 0; p < 6; p++)
-//     {
-//         if (period[p] == fc_effect.base_ins.period)
-//         {
-//             break;
-//         }
-//     }
-//     if (p > 5)
-//         p = 0;
-//     send_base_ins |= p << 3;
-
-//     if (fc_effect.base_ins.dir)
-//         send_base_ins |= BIT(6);
-// }
-
 /**
  * @brief 打包基本数据  数据包
  *
@@ -67,7 +41,7 @@ void pack_base(void)
 }
 
 #define INS_LEN 16 // 指令长度
-#define W_0_5MS 4 // 脉宽0.5ms
+#define W_0_5MS 4  // 脉宽0.5ms
 #define W_1MS 8
 #define W_2MS 16
 static volatile u8 send_cnt = 0;

@@ -18,7 +18,6 @@
 #include "app_comm_bt.h"
 #include "app_main.h"
 #include "led_strand_effect.h"
-extern fc_effect_t fc_effect; // 幻彩灯串效果数据
 #define UART_CBUF_SIZE 0x100
 #define UART_FRAM_SIZE 0x100 // 单次数据包最大值(每次cbuf缓存达到fram或串口收到一次数据, 就会起一次中断)
 
@@ -159,7 +158,7 @@ void uart_key_handle(void)
     // {
 
     if (_rx_buf[2] == 0x00)
-    { 
+    {
         // 打开星空顶
         if (fc_effect.on_off_flag == DEVICE_OFF)
         {
@@ -167,13 +166,14 @@ void uart_key_handle(void)
         }
     }
     else if (_rx_buf[2] == 0x01)
-    { 
+    {
         // 关闭星空顶
         soft_rurn_off_lights();
     }
     else if (_rx_buf[2] == 0x02)
-    { 
+    {
         // 打开红色
+        fc_effect.brightness_level = 0; // 不限制亮度
         colorful_light_set_static_color(RED);
         // fc_static_effect(0);
         if (fc_effect.on_off_flag == DEVICE_OFF)
@@ -185,6 +185,7 @@ void uart_key_handle(void)
     {
         // 打开绿色
         // fc_static_effect(1);
+        fc_effect.brightness_level = 0; // 不限制亮度
         colorful_light_set_static_color(GREEN);
         if (fc_effect.on_off_flag == DEVICE_OFF)
         {
@@ -192,9 +193,10 @@ void uart_key_handle(void)
         }
     }
     else if (_rx_buf[2] == 0x04)
-    { 
+    {
         // 打开蓝色
         // fc_static_effect(2);
+        fc_effect.brightness_level = 0; // 不限制亮度
         colorful_light_set_static_color(BLUE);
         if (fc_effect.on_off_flag == DEVICE_OFF)
         {
@@ -205,6 +207,7 @@ void uart_key_handle(void)
     {
         // 打开白色
         // fc_static_effect(3);
+        fc_effect.brightness_level = 0; // 不限制亮度
         colorful_light_set_static_color(PURE_WHITE);
         if (fc_effect.on_off_flag == DEVICE_OFF)
         {
@@ -212,9 +215,10 @@ void uart_key_handle(void)
         }
     }
     else if (_rx_buf[2] == 0x06)
-    { 
+    {
         // 打开黄色
         // fc_static_effect(4);
+        fc_effect.brightness_level = 0; // 不限制亮度
         colorful_light_set_static_color(YELLOW);
         if (fc_effect.on_off_flag == DEVICE_OFF)
         {
@@ -222,9 +226,10 @@ void uart_key_handle(void)
         }
     }
     else if (_rx_buf[2] == 0x07)
-    { 
+    {
         // 打开青色
         // fc_static_effect(5);
+        fc_effect.brightness_level = 0; // 不限制亮度
         colorful_light_set_static_color(CYAN);
         if (fc_effect.on_off_flag == DEVICE_OFF)
         {
@@ -232,9 +237,10 @@ void uart_key_handle(void)
         }
     }
     else if (_rx_buf[2] == 0x08)
-    { 
+    {
         // 打开紫色
         // fc_static_effect(7);
+        fc_effect.brightness_level = 0; // 不限制亮度
         colorful_light_set_static_color(PURPLE);
         if (fc_effect.on_off_flag == DEVICE_OFF)
         {
@@ -242,26 +248,28 @@ void uart_key_handle(void)
         }
     }
     else if (_rx_buf[2] == 0x09)
-    { 
+    {
         // 打开冷白
     }
     else if (_rx_buf[2] == 0x0a)
-    { 
+    {
         // 打开暖白
     }
     else if (_rx_buf[2] == 0x0b)
-    { 
+    {
         // 打开渐变
+        fc_effect.brightness_level = 0; // 不限制亮度
         extern void yuyin_effect1(void);
-        yuyin_effect1(); // 语音控制的灯光动画效果 
+        yuyin_effect1(); // 语音控制的灯光动画效果
         if (fc_effect.on_off_flag == DEVICE_OFF)
         {
             soft_turn_on_the_light();
         }
     }
     else if (_rx_buf[2] == 0x0c)
-    { 
+    {
         // 打开呼吸
+        fc_effect.brightness_level = 0; // 不限制亮度
         void yuyin_effect2(void);
         yuyin_effect2();
         if (fc_effect.on_off_flag == DEVICE_OFF)
@@ -270,8 +278,9 @@ void uart_key_handle(void)
         }
     }
     else if (_rx_buf[2] == 0x0d)
-    { 
+    {
         // 打开白光呼吸
+        fc_effect.brightness_level = 0; // 不限制亮度
         yuyin_effect3();
         if (fc_effect.on_off_flag == DEVICE_OFF)
         {
@@ -279,8 +288,9 @@ void uart_key_handle(void)
         }
     }
     else if (_rx_buf[2] == 0x0e)
-    { 
+    {
         // 打开声控
+        fc_effect.brightness_level = 0; // 不限制亮度
         yuyin_music_effect();
         if (fc_effect.on_off_flag == DEVICE_OFF)
         {
@@ -288,27 +298,27 @@ void uart_key_handle(void)
         }
     }
     else if (_rx_buf[2] == 0x0f)
-    { 
+    {
         // 打开白光声控
     }
     else if (_rx_buf[2] == 0x10)
-    { 
+    {
         // 亮度调亮点
         bright_plus();
     }
     else if (_rx_buf[2] == 0x11)
-    { 
+    {
         // 亮度调暗点
         bright_sub();
     }
     else if (_rx_buf[2] == 0x12)
-    { 
+    {
         // 亮度调到最亮
         void max_bright(void);
         max_bright();
     }
     else if (_rx_buf[2] == 0x13)
-    { 
+    {
         // 亮度调到最暗
         void min_bright(void);
         min_bright();
