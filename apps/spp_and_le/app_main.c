@@ -347,7 +347,7 @@ extern int ct_uart_init_a(u32 baud);
 extern void run_tick_per_10ms(void);
 extern void WS2812FX_service();
 void clr_wdt(void);
-void check_mic_sound(void);
+// void check_mic_sound(void);
 extern void WS2812FX_trigger();
 extern void bw_breath_effect(void);
 extern void bw_effect3(void);

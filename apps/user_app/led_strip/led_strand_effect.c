@@ -66,7 +66,8 @@ void fc_data_init(void)
     fc_effect.b = 255;
     fc_effect.speed = 80;
     fc_effect.music.m = 1;
-    fc_effect.music.s = 80;             // 灵敏度
+    // fc_effect.music.s = 80;             // 灵敏度
+    fc_effect.music.s = 100;             // 灵敏度
     fc_effect.brightness_percent = 100; // 亮度百分比
 
     // 电机

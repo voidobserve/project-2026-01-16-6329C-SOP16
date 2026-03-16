@@ -1910,14 +1910,7 @@ obj/Release/apps/user_app/led_strip/led_strip_drive.o
 -r=obj/Release/apps/user_app/led_strip/led_strip_drive.o,gpio_set_pull_down,l
 -r=obj/Release/apps/user_app/led_strip/led_strip_drive.o,check_mic_adc,pl
 -r=obj/Release/apps/user_app/led_strip/led_strip_drive.o,adc_get_value,l
--r=obj/Release/apps/user_app/led_strip/led_strip_drive.o,check_mic_sound,pl
--r=obj/Release/apps/user_app/led_strip/led_strip_drive.o,set_sensitive,pl
--r=obj/Release/apps/user_app/led_strip/led_strip_drive.o,printf,l
--r=obj/Release/apps/user_app/led_strip/led_strip_drive.o,get_sound_result,pl
 -r=obj/Release/apps/user_app/led_strip/led_strip_drive.o,ledc_data,pl
--r=obj/Release/apps/user_app/led_strip/led_strip_drive.o,sound_cnt,pl
--r=obj/Release/apps/user_app/led_strip/led_strip_drive.o,sound,pl
--r=obj/Release/apps/user_app/led_strip/led_strip_drive.o,sound_v,pl
 obj/Release/apps/user_app/led_strip/led_strip_sys.o
 -r=obj/Release/apps/user_app/led_strip/led_strip_sys.o,init_led_strip,pl
 -r=obj/Release/apps/user_app/led_strip/led_strip_sys.o,m_hsv_to_rgb,pl

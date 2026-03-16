@@ -10,21 +10,19 @@
 
 // MIC_OFFON MIC_ENABLE; // 0-关闭麦克风，1-开启麦克风
 
-const struct ledc_platform_data ledc_data =
-    {
-        .index = 0,       // 控制器号
-        .port = LEDC_PIN, // 输出引脚
-        .idle_level = 1,  // 当前帧的空闲电平，0：低电平， 1：高电平
-        .out_inv = 1,     // 起始电平，0：高电平开始， 1：低电平开始
-        .bit_inv = 1,     // 取数据时高低位镜像，0：不镜像，1：8位镜像，2:16位镜像，3:32位镜像
-        .t_unit = t_42ns, // 时间单位
-        .t1h_cnt = 21,    // 1码的高电平时间 = t1h_cnt * t_unit;21*42=882
-        .t1l_cnt = 8,     // 1码的低电平时间 = t1l_cnt * t_unit;7*42=294
-        .t0h_cnt = 10,    // 0码的高电平时间 = t0h_cnt * t_unit;8*42=336
-        .t0l_cnt = 20,    // 0码的低电平时间 = t0l_cnt * t_unit;*/30*42=1260
-
-        .t_rest_cnt = 20000, // 复位信号时间 = t_rest_cnt * t_unit;20000*42=840000
-        .cbfun = NULL,       // 中断回调函数
+const struct ledc_platform_data ledc_data = {
+    .index = 0,          // 控制器号
+    .port = LEDC_PIN,    // 输出引脚
+    .idle_level = 1,     // 当前帧的空闲电平，0：低电平， 1：高电平
+    .out_inv = 1,        // 起始电平，0：高电平开始， 1：低电平开始
+    .bit_inv = 1,        // 取数据时高低位镜像，0：不镜像，1：8位镜像，2:16位镜像，3:32位镜像
+    .t_unit = t_42ns,    // 时间单位
+    .t1h_cnt = 21,       // 1码的高电平时间 = t1h_cnt * t_unit;21*42=882
+    .t1l_cnt = 8,        // 1码的低电平时间 = t1l_cnt * t_unit;7*42=294
+    .t0h_cnt = 10,       // 0码的高电平时间 = t0h_cnt * t_unit;8*42=336
+    .t0l_cnt = 20,       // 0码的低电平时间 = t0l_cnt * t_unit;*/30*42=1260
+    .t_rest_cnt = 20000, // 复位信号时间 = t_rest_cnt * t_unit;20000*42=840000
+    .cbfun = NULL,       // 中断回调函数
 };
 
 void led_state_init(void)
@@ -58,10 +56,9 @@ void fan_gpio_init(void)
     // gpio_set_pull_up(FAN_CTL_PIN, 0); // 关闭上拉
     // gpio_direction_output(FAN_CTL_PIN, 1); // 输出高电平
 
-
-    gpio_set_die(FAN_CTL_PIN, 1); // 输出模式
+    gpio_set_die(FAN_CTL_PIN, 1);          // 输出模式
     gpio_direction_output(FAN_CTL_PIN, 0); // 输出低电平
-    timer_pwm_init(JL_TIMER3, FAN_CTL_PIN, 100 , 0); 
+    timer_pwm_init(JL_TIMER3, FAN_CTL_PIN, 100, 0);
     set_timer_pwm_duty(JL_TIMER3, 5000); // 0 ~ 10000 -> 0 ~ 100%占空比
 }
 
@@ -87,7 +84,7 @@ void led_pwm_init(void)
     struct pwm_platform_data pwm_p_data;
     pwm_p_data.pwm_aligned_mode = pwm_edge_aligned; // 边沿对齐
     pwm_p_data.pwm_ch_num = pwm_ch0;                // 通道号
-    pwm_p_data.frequency = 30000;                    // 频率，单位：Hz
+    pwm_p_data.frequency = 30000;                   // 频率，单位：Hz
     pwm_p_data.duty = 0;                            // 上电输出0%占空比
     pwm_p_data.h_pin = LED_R_PIN;                   // 任意引脚
     pwm_p_data.l_pin = -1;                          // 任意引脚,不需要就填-1
@@ -96,7 +93,7 @@ void led_pwm_init(void)
     // G
     pwm_p_data.pwm_aligned_mode = pwm_edge_aligned; // 边沿对齐
     pwm_p_data.pwm_ch_num = pwm_ch1;                // 通道号
-    pwm_p_data.frequency = 30000;                    // 频率，单位：Hz
+    pwm_p_data.frequency = 30000;                   // 频率，单位：Hz
     pwm_p_data.duty = 0;                            // 上电输出0%占空比
     pwm_p_data.h_pin = LED_G_PIN;                   // 任意引脚
     pwm_p_data.l_pin = -1;                          // 任意引脚,不需要就填-1
@@ -105,7 +102,7 @@ void led_pwm_init(void)
     // B
     pwm_p_data.pwm_aligned_mode = pwm_edge_aligned; // 边沿对齐
     pwm_p_data.pwm_ch_num = pwm_ch2;                // 通道号
-    pwm_p_data.frequency = 30000;                    // 频率，单位：Hz
+    pwm_p_data.frequency = 30000;                   // 频率，单位：Hz
     pwm_p_data.duty = 0;                            // 上电输出0%占空比
     pwm_p_data.h_pin = LED_B_PIN;                   // 任意引脚
     pwm_p_data.l_pin = -1;                          // 任意引脚,不需要就填-1
@@ -216,77 +213,78 @@ u16 check_mic_adc(void)
     return adc_get_value(MIC_AD_CHANNEL);
 }
 
-#define MAX_SOUND 10
+// #define MAX_SOUND 10
 
-u32 sound_v; // 平均值
-u8 sound_cnt = 0;
+// u32 sound_v; // 平均值
+// u8 sound_cnt = 0;
 
-typedef struct
-{
-    int buf[MAX_SOUND];
-    int v;        // 平均值
-    int c_v;      // 当前值
-    u8 valid;     // 数据有效
-    u8 sensitive; // 灵敏度 0~100
-} sound_t;
+// typedef struct
+// {
+//     int buf[MAX_SOUND];
+//     int v;        // 平均值
+//     int c_v;      // 当前值
+//     u8 valid;     // 数据有效
+//     u8 sensitive; // 灵敏度 0~100
+// } sound_t;
 
-sound_t sound =
-    {
-        .c_v = 0,
-        .v = 0,
-        .valid = 0,
-        .sensitive = 20,
-};
+// sound_t sound =
+//     {
+//         .c_v = 0,
+//         .v = 0,
+//         .valid = 0,
+//         .sensitive = 20,
+// };
 
-void check_mic_sound(void)
-{
-    u8 i;
-    sound.buf[sound_cnt] = check_mic_adc();
-    sound.c_v = sound.buf[sound_cnt]; // 记录当前值
-    sound_cnt++;
-    if (sound_cnt > (MAX_SOUND - 1) || sound.valid == 1)
-    {
-        sound_cnt = 0;
-        sound.valid = 1;
-        sound.v = 0;
-        for (i = 0; i < MAX_SOUND; i++)
-        {
-            sound.v += sound.buf[i];
-        }
-        sound.v = sound.v / MAX_SOUND; // 计算平均值
-    }
-}
+// void check_mic_sound(void)
+// {
+//     u8 i;
+//     sound.buf[sound_cnt] = check_mic_adc();
+//     sound.c_v = sound.buf[sound_cnt]; // 记录当前值
+//     sound_cnt++;
+//     if (sound_cnt > (MAX_SOUND - 1) || sound.valid == 1)
+//     {
+//         sound_cnt = 0;
+//         sound.valid = 1;
+//         sound.v = 0;
+//         for (i = 0; i < MAX_SOUND; i++)
+//         {
+//             sound.v += sound.buf[i];
+//         }
+//         sound.v = sound.v / MAX_SOUND; // 计算平均值
+//     }
+// }
 
-void set_sensitive(u8 s)
-{
-    sound.sensitive = s;
-    printf("\n sound.sensitive=%d", sound.sensitive);
-}
+// void set_sensitive(u8 s)
+// {
+//     sound.sensitive = s;
+//     printf("\n sound.sensitive=%d", sound.sensitive);
+// }
+
 // 获取声控结果
 // 触发条件：（（当前声音大小 - 平均值）* 100 ）/ 平均值 > 灵敏度（0~100）
 // 0:没触发
 // 1:触发
-u8 get_sound_result(void)
-{
+// u8 get_sound_result(void)
+// {
 
-    if (sound.valid == 1)
-    {
-        if (sound.v > sound.c_v)
-        {
+//     if (sound.valid == 1)
+//     {
+//         if (sound.v > sound.c_v)
+//         {
 
-            // if( (sound.v - sound.c_v) * 100 / sound.v > sound.sensitive)
-            if ((sound.v - sound.c_v) > sound.sensitive * 10)
-            {
-                // printf("\n sound.v =%d",sound.v);
-                // printf("\n sound.c_v =%d",sound.c_v);
+//             // if( (sound.v - sound.c_v) * 100 / sound.v > sound.sensitive)
+//             if ((sound.v - sound.c_v) > sound.sensitive * 10)
+//             {
+//                 // printf("\n sound.v =%d",sound.v);
+//                 // printf("\n sound.c_v =%d",sound.c_v);
 
-                return 1;
-            }
-        }
-    }
-    else
-    {
-        return 0;
-    }
-    return 0;
-}
+//                 return 1;
+//             }
+//         }
+//     }
+//     else
+//     {
+//         return 0;
+//     }
+//     return 0;
+// }
