@@ -37805,16 +37805,16 @@ update_target_end:
  1e17642:    2c 25             	if (r2 == 0) goto -424 <update_target_end+0x1CD8 : 1e1749c >
  1e17644:    73 0d             	r3 >>>= r5
  1e17646:    0a 00             	ssync
- 1e17648:    4d 61             	b[r0 + 20] = r5
+ 1e17648:    41 70             	r1 = 4
  1e1764a:    72 20             	if (r0 == 0) goto 228 <update_target_end+0x1F6C : 1e17730 >
- 1e1764c:    31 36             	if (r3 != 0) goto 98 <update_target_end+0x1EEC : 1e176b0 >
+ 1e1764c:    32 34             	if (r2 != 0) goto 100 <update_target_end+0x1EEE : 1e176b2 >
  1e1764e:    20 32             	if (r1 != 0) goto 64 <update_target_end+0x1ECC : 1e17690 >
  1e17650:    30 32             	if (r1 != 0) goto 96 <update_target_end+0x1EEE : 1e176b2 >
  1e17652:    36 00             	[--sp] = rets
  1e17654:    31 31             	if (r0 != 0) goto -414 <update_target_end+0x1CF4 : 1e174b8 >
  1e17656:    3a 33             	if (r1 != 0) goto -396 <update_target_end+0x1D08 : 1e174cc >
- 1e17658:    36 3a             	if (r5 != 0) goto 108 <update_target_end+0x1F02 : 1e176c6 >
- 1e1765a:    32 34             	if (r2 != 0) goto 100 <update_target_end+0x1EFC : 1e176c0 >
+ 1e17658:    35 3a             	if (r5 != 0) goto 106 <update_target_end+0x1F00 : 1e176c4 >
+ 1e1765a:    33 36             	if (r3 != 0) goto 102 <update_target_end+0x1EFE : 1e176c2 >
  1e1765c:    00 6d             	r0 = b[r6 + 16] (u)
  1e1765e:    73 67             	r3 = b[r3 + 23] (u)
  1e17660:    5f 74             	r15 = 69
